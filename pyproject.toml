@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "betalactamase-transfer"
+version = "0.1.0"
+description = "Curation and modelling of transferable beta-lactamase mutation effects"
+requires-python = ">=3.9"
+dependencies = [
+  "biopython>=1.85,<2",
+  "numpy>=1.24,<3",
+  "openpyxl>=3.1,<4",
+  "pandas>=2.0,<3",
+  "scipy>=1.11,<1.14",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+  "ruff>=0.16,<0.17",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["UP006", "UP007", "UP035", "B905"]
