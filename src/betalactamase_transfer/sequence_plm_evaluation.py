@@ -13,7 +13,6 @@ import pandas as pd
 from .sequence_neighbourhood_evaluation import (
     CONDITION_MODE_BY_SCHEME,
     CORE_SCHEME_IDS,
-    RIDGE_ALPHAS,
     SUBSTITUTION_INDEX,
     SUBSTITUTIONS,
     TARGET_COLUMN,
@@ -26,10 +25,19 @@ ESMC_SOURCE_MODEL_ID = "biohub/ESMC-600M"
 ESMC_SOURCE_MODEL_REVISION = "a7e82012c83126b9eedb055fea9fa84b6c02f094"
 ESMC_HIDDEN_SIZE = 1152
 
-PRIMARY_HIDDEN_STATE_INDEX = 36
 EMBEDDING_HIDDEN_STATE_INDICES = (9, 18, 27, 36)
-PRIMARY_LAYER_ARRAY_INDEX = EMBEDDING_HIDDEN_STATE_INDICES.index(
-    PRIMARY_HIDDEN_STATE_INDEX
+ESMC_RIDGE_ALPHAS = (
+    1e-4,
+    1e-3,
+    1e-2,
+    1e-1,
+    1.0,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    100000.0,
+    1000000.0,
 )
 
 EXPECTED_PROTEINS = ("NDM-1", "VIM-2")
@@ -43,6 +51,7 @@ class SequencePLMEvaluationError(RuntimeError):
 
 @dataclass(frozen=True)
 class ESMCTransform:
+    hidden_state_index: int
     condition_mode: str
     condition_categories: tuple[str, ...]
     concentration_mean: float
@@ -381,11 +390,23 @@ def _join_scheme_observations(
     return frame
 
 
+def _hidden_state_array_index(hidden_state_index: int) -> int:
+    try:
+        return EMBEDDING_HIDDEN_STATE_INDICES.index(int(hidden_state_index))
+    except ValueError as exc:
+        raise SequencePLMEvaluationError(
+            f"Unsupported ESMC hidden-state index: {hidden_state_index}"
+        ) from exc
+
+
 def _site_delta(
     frame: pd.DataFrame,
     mutant_embeddings: np.ndarray,
     wild_type_embeddings: np.ndarray,
+    *,
+    hidden_state_index: int,
 ) -> np.ndarray:
+    layer_array_index = _hidden_state_array_index(hidden_state_index)
     embedding_rows = frame["embedding_row"].to_numpy(dtype=int)
     positions = frame["assay_position"].to_numpy(dtype=int) - 1
     proteins = frame["protein_id"].astype(str).to_numpy()
@@ -422,7 +443,7 @@ def _site_delta(
     mutant = np.asarray(
         mutant_embeddings[
             embedding_rows,
-            PRIMARY_LAYER_ARRAY_INDEX,
+            layer_array_index,
             :,
         ],
         dtype=np.float32,
@@ -431,7 +452,7 @@ def _site_delta(
     wild_type = np.asarray(
         wild_type_embeddings[
             protein_indices,
-            PRIMARY_LAYER_ARRAY_INDEX,
+            layer_array_index,
             positions,
             :,
         ],
@@ -452,11 +473,13 @@ def _fit_transform(
     wild_type_embeddings: np.ndarray,
     *,
     condition_mode: str,
+    hidden_state_index: int,
 ) -> ESMCTransform:
     delta = _site_delta(
         train,
         mutant_embeddings,
         wild_type_embeddings,
+        hidden_state_index=hidden_state_index,
     ).astype(np.float64)
 
     mean = delta.mean(axis=0)
@@ -490,6 +513,7 @@ def _fit_transform(
         raise SequencePLMEvaluationError(f"Unknown condition mode: {condition_mode}")
 
     return ESMCTransform(
+        hidden_state_index=hidden_state_index,
         condition_mode=condition_mode,
         condition_categories=categories,
         concentration_mean=concentration_mean,
@@ -573,6 +597,7 @@ def _design_chunk(
         frame,
         mutant_embeddings,
         wild_type_embeddings,
+        hidden_state_index=transform.hidden_state_index,
     ).astype(np.float64)
 
     matrix[:, embedding_offset:] = (
@@ -694,6 +719,7 @@ def _fit_predict(
     wild_type_embeddings: np.ndarray,
     *,
     condition_mode: str,
+    hidden_state_index: int,
     alpha: float,
 ) -> np.ndarray:
     transform = _fit_transform(
@@ -701,6 +727,7 @@ def _fit_predict(
         mutant_embeddings,
         wild_type_embeddings,
         condition_mode=condition_mode,
+        hidden_state_index=hidden_state_index,
     )
 
     gram, target_product = _ridge_statistics(
@@ -725,93 +752,102 @@ def _fit_predict(
     )
 
 
-def _select_alpha(
+def _select_model_setting(
     folds: Sequence[tuple[pd.DataFrame, pd.DataFrame]],
     mutant_embeddings: np.ndarray,
     wild_type_embeddings: np.ndarray,
     *,
     condition_mode: str,
-) -> tuple[float, float, list[Mapping[str, object]]]:
+) -> tuple[int, float, float, list[Mapping[str, object]]]:
     detail: list[Mapping[str, object]] = []
-    candidates = []
+    candidates: list[tuple[float, int, float]] = []
 
-    fold_data = []
+    for hidden_state_index in EMBEDDING_HIDDEN_STATE_INDICES:
+        fold_data = []
 
-    for train, validation in folds:
-        transform = _fit_transform(
-            train,
-            mutant_embeddings,
-            wild_type_embeddings,
-            condition_mode=condition_mode,
-        )
-
-        gram, target_product = _ridge_statistics(
-            train,
-            transform,
-            mutant_embeddings,
-            wild_type_embeddings,
-        )
-
-        fold_data.append(
-            (
-                validation,
-                transform,
-                gram,
-                target_product,
-            )
-        )
-
-    for alpha in RIDGE_ALPHAS:
-        fold_maes = []
-
-        for fold_index, (
-            validation,
-            transform,
-            gram,
-            target_product,
-        ) in enumerate(fold_data):
-            coefficients = _ridge_coefficients(
-                gram,
-                target_product,
-                alpha=alpha,
+        for train, validation in folds:
+            transform = _fit_transform(
+                train,
+                mutant_embeddings,
+                wild_type_embeddings,
+                condition_mode=condition_mode,
+                hidden_state_index=hidden_state_index,
             )
 
-            predictions = _predict(
-                validation,
+            gram, target_product = _ridge_statistics(
+                train,
                 transform,
-                coefficients,
                 mutant_embeddings,
                 wild_type_embeddings,
             )
 
-            mae = float(
-                np.mean(
-                    np.abs(
-                        validation[TARGET_COLUMN].to_numpy(dtype=float) - predictions
-                    )
+            fold_data.append(
+                (
+                    validation,
+                    transform,
+                    gram,
+                    target_product,
                 )
             )
 
-            fold_maes.append(mae)
+        for alpha in ESMC_RIDGE_ALPHAS:
+            fold_maes = []
 
-            detail.append(
-                {
-                    "model_id": MODEL_ID,
-                    "hidden_state_index": PRIMARY_HIDDEN_STATE_INDEX,
-                    "alpha": alpha,
-                    "cv_fold": fold_index,
-                    "validation_mae": mae,
-                }
+            for fold_index, (
+                validation,
+                transform,
+                gram,
+                target_product,
+            ) in enumerate(fold_data):
+                coefficients = _ridge_coefficients(
+                    gram,
+                    target_product,
+                    alpha=alpha,
+                )
+
+                predictions = _predict(
+                    validation,
+                    transform,
+                    coefficients,
+                    mutant_embeddings,
+                    wild_type_embeddings,
+                )
+
+                mae = float(
+                    np.mean(
+                        np.abs(
+                            validation[TARGET_COLUMN].to_numpy(dtype=float)
+                            - predictions
+                        )
+                    )
+                )
+
+                fold_maes.append(mae)
+
+                detail.append(
+                    {
+                        "model_id": MODEL_ID,
+                        "hidden_state_index": hidden_state_index,
+                        "alpha": alpha,
+                        "cv_fold": fold_index,
+                        "validation_mae": mae,
+                    }
+                )
+
+            candidates.append(
+                (
+                    float(np.mean(fold_maes)),
+                    hidden_state_index,
+                    alpha,
+                )
             )
 
-        candidates.append((float(np.mean(fold_maes)), alpha))
-
-    best_mae, best_alpha = min(
+    best_mae, best_hidden_state_index, best_alpha = min(
         candidates,
-        key=lambda item: (item[0], item[1]),
+        key=lambda item: (item[0], item[1], item[2]),
     )
 
-    return best_alpha, best_mae, detail
+    return best_hidden_state_index, best_alpha, best_mae, detail
 
 
 def _metric_values(
@@ -864,6 +900,7 @@ def _prediction_records(
     scheme: pd.Series,
     evaluation_iteration: object,
     evaluation_role: str,
+    hidden_state_index: int,
     alpha: float,
 ) -> list[Mapping[str, object]]:
     result = pd.DataFrame(
@@ -871,7 +908,7 @@ def _prediction_records(
             "scheme_id": str(scheme["scheme_id"]),
             "task_id": str(scheme["task_id"]),
             "model_id": MODEL_ID,
-            "hidden_state_index": PRIMARY_HIDDEN_STATE_INDEX,
+            "hidden_state_index": hidden_state_index,
             "evaluation_iteration": evaluation_iteration,
             "evaluation_role": evaluation_role,
             "observation_id": test["observation_id"].to_numpy(),
@@ -929,7 +966,7 @@ def _nested_evaluation(
                 f"Incomplete nested split for {scheme_id}/{iteration}"
             )
 
-        alpha, validation_mae, detail = _select_alpha(
+        hidden_state_index, alpha, validation_mae, detail = _select_model_setting(
             [(train, validation)],
             mutant_embeddings,
             wild_type_embeddings,
@@ -944,7 +981,10 @@ def _nested_evaluation(
                     "evaluation_iteration": iteration,
                     "selection_scope": "inner_validation",
                     **row,
-                    "selected": row["alpha"] == alpha,
+                    "selected": (
+                        row["hidden_state_index"] == hidden_state_index
+                        and row["alpha"] == alpha
+                    ),
                 }
             )
 
@@ -955,7 +995,7 @@ def _nested_evaluation(
                 "evaluation_iteration": iteration,
                 "selection_scope": "selected_setting",
                 "model_id": MODEL_ID,
-                "hidden_state_index": PRIMARY_HIDDEN_STATE_INDEX,
+                "hidden_state_index": hidden_state_index,
                 "alpha": alpha,
                 "cv_fold": "",
                 "validation_mae": validation_mae,
@@ -974,6 +1014,7 @@ def _nested_evaluation(
             mutant_embeddings,
             wild_type_embeddings,
             condition_mode=condition_mode,
+            hidden_state_index=hidden_state_index,
             alpha=alpha,
         )
 
@@ -984,6 +1025,7 @@ def _nested_evaluation(
                 scheme=scheme,
                 evaluation_iteration=iteration,
                 evaluation_role="outer_test",
+                hidden_state_index=hidden_state_index,
                 alpha=alpha,
             )
         )
@@ -1038,7 +1080,7 @@ def _source_cv_evaluation(
             )
         )
 
-    alpha, validation_mae, detail = _select_alpha(
+    hidden_state_index, alpha, validation_mae, detail = _select_model_setting(
         folds,
         mutant_embeddings,
         wild_type_embeddings,
@@ -1055,7 +1097,10 @@ def _source_cv_evaluation(
                 "evaluation_iteration": "final",
                 "selection_scope": "source_cv",
                 **row,
-                "selected": row["alpha"] == alpha,
+                "selected": (
+                    row["hidden_state_index"] == hidden_state_index
+                    and row["alpha"] == alpha
+                ),
             }
         )
 
@@ -1066,7 +1111,7 @@ def _source_cv_evaluation(
             "evaluation_iteration": "final",
             "selection_scope": "selected_setting",
             "model_id": MODEL_ID,
-            "hidden_state_index": PRIMARY_HIDDEN_STATE_INDEX,
+            "hidden_state_index": hidden_state_index,
             "alpha": alpha,
             "cv_fold": "",
             "validation_mae": validation_mae,
@@ -1080,6 +1125,7 @@ def _source_cv_evaluation(
         mutant_embeddings,
         wild_type_embeddings,
         condition_mode=condition_mode,
+        hidden_state_index=hidden_state_index,
         alpha=alpha,
     )
 
@@ -1089,6 +1135,7 @@ def _source_cv_evaluation(
         scheme=scheme,
         evaluation_iteration="final",
         evaluation_role="final_test",
+        hidden_state_index=hidden_state_index,
         alpha=alpha,
     )
 
@@ -1111,11 +1158,18 @@ def _metric_rows(predictions: pd.DataFrame) -> pd.DataFrame:
         subsets.append(("pooled", group))
 
         for evaluation_iteration, subset in subsets:
+            hidden_states = sorted(subset["hidden_state_index"].unique().tolist())
+            metric_hidden_state: int | str
+            if len(hidden_states) == 1:
+                metric_hidden_state = int(hidden_states[0])
+            else:
+                metric_hidden_state = "mixed"
+
             rows.append(
                 {
                     "scheme_id": scheme_id,
                     "model_id": model_id,
-                    "hidden_state_index": PRIMARY_HIDDEN_STATE_INDEX,
+                    "hidden_state_index": metric_hidden_state,
                     "evaluation_iteration": evaluation_iteration,
                     "n_observations": len(subset),
                     "n_groups": subset["evaluation_group_id"].nunique(),
@@ -1235,8 +1289,12 @@ def write_sequence_plm_evaluation(
 
     summary = {
         "model_id": MODEL_ID,
-        "primary_hidden_state_index": PRIMARY_HIDDEN_STATE_INDEX,
-        "candidate_alphas": list(RIDGE_ALPHAS),
+        "candidate_hidden_state_indices": list(EMBEDDING_HIDDEN_STATE_INDICES),
+        "candidate_alphas": list(ESMC_RIDGE_ALPHAS),
+        "model_selection_metric": "mean_validation_mae",
+        "model_selection_tie_break": (
+            "lower hidden-state index, then lower alpha for exact mean-MAE ties"
+        ),
         "scheme_ids": sorted(predictions["scheme_id"].unique().tolist()),
         "prediction_count": int(len(predictions)),
         "metric_row_count": int(len(metrics)),

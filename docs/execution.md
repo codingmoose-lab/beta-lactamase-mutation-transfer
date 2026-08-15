@@ -226,11 +226,12 @@ After validating the extracted arrays and their provenance, run:
 
     python scripts/data/25_evaluate_sequence_plm.py
 
-The current ESMC model uses the mutation-site hidden-state difference relative
-to the corresponding wild-type residue, together with ordered substitution
-identity and the task-appropriate condition information. Model settings are
-selected only from the validation population permitted by each frozen
-evaluation scheme. Final held-out labels are not used for model selection.
+The ESMC model uses the mutation-site hidden-state difference relative to the
+corresponding wild-type residue, together with ordered substitution identity and
+the task-appropriate condition information. Hidden-state index and ESMC ridge
+regularisation are selected jointly from the predeclared candidate sets using
+only the validation population permitted by each frozen evaluation scheme.
+Final held-out labels are not used for model selection.
 
 See `docs/sequence_plm_evaluation.md`.
 

@@ -112,10 +112,20 @@ Cross-protein transfer selects model settings using source-protein grouped
 cross-validation and evaluates the target protein only after source-side model
 selection is complete. Final held-out labels are not used for model selection.
 
-The current evaluator uses hidden-state index 36 for the initial ESMC analysis.
-The choice among the four predeclared extracted hidden states is determined
-exclusively from permitted validation data. Previously inspected held-out
-results for hidden-state index 36 are not used in that selection criterion.
+The evaluator jointly selects the hidden-state index and ridge regularisation
+from permitted validation data only. The hidden-state candidates are the four
+predeclared extracted states 9, 18, 27, and 36. The ESMC-specific ridge grid is
+`1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100, 1e3, 1e4, 1e5, 1e6`. Selection minimizes
+mean validation MAE; exact ties are resolved deterministically by lower
+hidden-state index and then lower alpha.
+
+For nested within-protein evaluation, each outer iteration selects its own
+hidden-state/alpha pair using only that iteration's inner validation data. For
+cross-protein transfer, one pair is selected using source-protein grouped
+cross-validation before the target protein is evaluated. Held-out labels do not
+contribute to either selection criterion. If nested outer iterations select
+different hidden states, the pooled metric row is labelled `mixed` rather than
+being attributed to a single state.
 
 ## Metrics and matched comparisons
 
