@@ -1,0 +1,24 @@
+# Protein-language-model package versions recorded for the verified extraction environment.
+#
+# Verified production extraction:
+# Python 3.11.15
+# PyTorch package metadata: 2.13.0
+# PyTorch runtime: 2.13.0+cu130
+# CUDA build: 13.0
+# NVIDIA GeForce RTX 4060 Ti
+#
+# This file records Python package versions observed in the successful environment.
+# It does not by itself guarantee reconstruction of the CUDA-enabled PyTorch build.
+# The historical environment does not retain a direct package URL or configured
+# package index for that installation. The exact successful runtime is recorded in
+# the extraction summary.
+
+torch==2.13.0
+transformers==4.57.6
+huggingface-hub==0.36.0
+tokenizers==0.22.2
+safetensors==0.8.0
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.13.1
+tqdm==4.68.2

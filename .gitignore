@@ -21,8 +21,14 @@ dist/
 .vscode/
 .idea/
 
-# Scientific source data and generated research products.
+# Scientific source data and generated products.
 data/raw/
 data/interim/
 data/processed/
 
+# Local transfer/archive files.
+project.zip
+data/*.zip
+
+# Local research planning and update backups.
+.local/
