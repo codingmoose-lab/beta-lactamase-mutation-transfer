@@ -139,7 +139,7 @@ grouping unit defined by the frozen evaluation scheme.
 ## Validation requirements
 
 Before ESMC evaluation is accepted, the implementation verifies the frozen ESMC
-model identity and revision, hidden-state inventory, embedding dimensions,
+model identity and revision, hidden-state indices, embedding dimensions,
 embedding-index digest, canonical embedding rows, protein identities,
 assay-sequence provenance, finite biological embedding ranges, absence of
 outcomes from modelling-membership tables, and availability of all core

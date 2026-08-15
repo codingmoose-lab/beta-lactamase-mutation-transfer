@@ -328,6 +328,8 @@ beta-lactamase-mutation-transfer
 │     ├─ secondary_structure.py
 │     ├─ sequence_mapping.py
 │     ├─ sequence_neighbourhood_evaluation.py
+│     ├─ sequence_plm_embeddings.py
+│     ├─ sequence_plm_evaluation.py
 │     ├─ source_tables.py
 │     ├─ structural_descriptors.py
 │     └─ task_definitions.py
@@ -368,6 +370,10 @@ beta-lactamase-mutation-transfer
    ├─ test_sequence_mapping_integration.py
    ├─ test_sequence_neighbourhood_evaluation.py
    ├─ test_sequence_neighbourhood_evaluation_integration.py
+   ├─ test_sequence_plm_embeddings.py
+   ├─ test_sequence_plm_embeddings_integration.py
+   ├─ test_sequence_plm_evaluation.py
+   ├─ test_sequence_plm_evaluation_integration.py
    ├─ test_source_tables.py
    ├─ test_source_tables_integration.py
    ├─ test_structural_descriptors.py

@@ -22,7 +22,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--extract",
         action="store_true",
-        help="Run GPU ESMC extraction after validating the outcome-blind inventory.",
+        help=(
+            "Run GPU ESMC extraction after validating the "
+            "outcome-blind embedding index."
+        ),
     )
     parser.add_argument(
         "--allow-download",
