@@ -30,7 +30,7 @@ that numerical difference would create a protein-background shortcut.
 
 Model selection uses validation MAE. Ridge alpha is selected from the existing fixed
 logarithmic grid. The sequence model additionally selects radius; ties prefer smaller
-radius and then smaller alpha. Final cross-protein target labels never participate in
+radius and then smaller alpha. Cross-protein test labels never participate in
 model selection.
 
 The implementation uses sparse matrices and SciPy LSQR to avoid constructing a dense

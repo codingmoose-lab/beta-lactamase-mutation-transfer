@@ -325,7 +325,7 @@ def acquire_mcsa_reference_sequences(
     expected_ids = {15, 16}
     if set(references) != expected_ids:
         raise MCSAReferenceSequenceError(
-            f"Expected frozen M-CSA entries {sorted(expected_ids)}, "
+            f"Expected M-CSA entries {sorted(expected_ids)}, "
             f"observed {sorted(references)}"
         )
 

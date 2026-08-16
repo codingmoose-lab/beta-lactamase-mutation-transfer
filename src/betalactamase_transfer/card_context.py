@@ -385,7 +385,7 @@ def acquire_card_ontology(
     *,
     overwrite: bool = False,
 ) -> Dict[str, object]:
-    """Preserve and validate the frozen official CARD ontology 4.0.1 archive."""
+    """Validate and retain the CARD ontology 4.0.1 archive used by the study."""
 
     repo_root = repo_root.resolve()
     source_archive = source_archive.expanduser().resolve()
@@ -395,7 +395,7 @@ def acquire_card_ontology(
     source_hash = _sha256_path(source_archive)
     if source_hash != CARD_ONTOLOGY_ARCHIVE_SHA256:
         raise CARDContextError(
-            "CARD ontology archive SHA-256 does not match the frozen 4.0.1 source: "
+            "CARD ontology archive SHA-256 does not match the recorded 4.0.1 source: "
             f"{source_hash}"
         )
 
@@ -640,7 +640,7 @@ def _assay_crosswalk_rows(
     unsupported = sorted(set(observed_codes) - set(ASSAY_ANTIBIOTIC_NAMES))
     if unsupported:
         raise CARDContextError(
-            "Assay table contains antibiotic code(s) without frozen CARD crosswalk: "
+            "Assay table contains antibiotic code(s) without a CARD crosswalk: "
             + ", ".join(unsupported)
         )
 

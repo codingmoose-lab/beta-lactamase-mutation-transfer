@@ -28,5 +28,5 @@ def test_core_sequence_schemes_are_defined_and_ready() -> None:
     selected = schemes[schemes["scheme_id"].isin(CORE_SCHEME_IDS)]
     assert set(selected["scheme_id"]) == set(CORE_SCHEME_IDS)
     assert selected["status"].eq("ready").all()
-    assert not selected["held_out_labels_used_for_model_selection"].astype(bool).any()
+    assert not selected["test_labels_used_for_model_selection"].astype(bool).any()
     assert not selected["assignment_uses_outcome_values"].astype(bool).any()

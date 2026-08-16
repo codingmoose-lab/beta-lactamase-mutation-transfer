@@ -785,7 +785,8 @@ def prepare_alphafold_models(
         primary_chain = str(selected[protein_id]["primary_chain"])
         if str(selected[protein_id]["pdb_id"]) != pdb_id:
             raise AlphaFoldPreparationError(
-                f"Selected PDB for {protein_id} differs from frozen reference {pdb_id}"
+                "Selected PDB for "
+                f"{protein_id} differs from recorded reference {pdb_id}"
             )
 
         raw_dir = root / "data/raw/alphafold" / accession

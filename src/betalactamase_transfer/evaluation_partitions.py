@@ -37,14 +37,14 @@ SCHEME_COLUMNS = [
     "group_type",
     "outer_fold_count",
     "source_cv_fold_count",
-    "held_out_dimension",
-    "held_out_value",
-    "held_out_class",
-    "held_out_labels_used_for_model_selection",
+    "test_dimension",
+    "test_value",
+    "test_category",
+    "test_labels_used_for_model_selection",
     "assignment_uses_outcome_values",
     "model_selection_grouping_key",
     "model_selection_rule",
-    "final_evaluation_rule",
+    "test_evaluation_rule",
     "scientific_claim",
 ]
 
@@ -205,7 +205,7 @@ def _source_cv_assignments(
                 "iteration": "",
                 "group_type": group_type,
                 "group_id": group_id,
-                "split_role": "final_test",
+                "split_role": "target_test",
                 "cv_fold": "",
             }
         )
@@ -359,7 +359,7 @@ def _apply_source_cv_audit(
         _audit_row(
             scheme_id=scheme_id,
             iteration="",
-            split_role="final_test",
+            split_role="target_test",
             cv_fold="",
             frame=target,
             group_type=group_type,
@@ -368,7 +368,7 @@ def _apply_source_cv_audit(
     return rows
 
 
-def _assert_group_partition_integrity(
+def _validate_group_partition(
     *,
     scheme_id: str,
     assignments: pd.DataFrame,
@@ -502,17 +502,17 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
                 "group_type": group_type,
                 "outer_fold_count": OUTER_FOLD_COUNT,
                 "source_cv_fold_count": "",
-                "held_out_dimension": group_type,
-                "held_out_value": "rotating_outer_fold",
-                "held_out_class": "unseen_group",
-                "held_out_labels_used_for_model_selection": False,
+                "test_dimension": group_type,
+                "test_value": "rotating_outer_fold",
+                "test_category": "unseen_group",
+                "test_labels_used_for_model_selection": False,
                 "assignment_uses_outcome_values": False,
                 "model_selection_grouping_key": scheme_id,
                 "model_selection_rule": (
                     "for each outer fold, validation groups are selected only from "
                     "the remaining groups; outer-test labels are not used"
                 ),
-                "final_evaluation_rule": (
+                "test_evaluation_rule": (
                     "report performance across the five outer test folds; every "
                     "group is tested exactly once"
                 ),
@@ -546,9 +546,9 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
         source: pd.DataFrame,
         target: pd.DataFrame,
         group_type: str,
-        held_out_dimension: str,
-        held_out_value: str,
-        held_out_class: str,
+        test_dimension: str,
+        test_value: str,
+        test_category: str,
         scientific_claim: str,
         population_policy: str,
         model_selection_grouping_key: str,
@@ -561,23 +561,23 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
                 "regime_id": regime_id,
                 "priority": priority,
                 "status": "ready",
-                "assignment_family": "source_only_grouped_cv_then_final_test",
+                "assignment_family": "source_only_grouped_cv_then_target_test",
                 "group_type": group_type,
                 "outer_fold_count": "",
                 "source_cv_fold_count": SOURCE_CV_FOLD_COUNT,
-                "held_out_dimension": held_out_dimension,
-                "held_out_value": held_out_value,
-                "held_out_class": held_out_class,
-                "held_out_labels_used_for_model_selection": False,
+                "test_dimension": test_dimension,
+                "test_value": test_value,
+                "test_category": test_category,
+                "test_labels_used_for_model_selection": False,
                 "assignment_uses_outcome_values": False,
                 "model_selection_grouping_key": model_selection_grouping_key,
                 "model_selection_rule": (
                     "select model settings using five grouped folds from source "
-                    "rows only; final-test labels are unavailable"
+                    "rows only; test labels are unavailable"
                 ),
-                "final_evaluation_rule": (
+                "test_evaluation_rule": (
                     "after model settings are fixed, refit on all source rows and "
-                    "evaluate the held-out target once"
+                    "evaluate the target population once"
                 ),
                 "scientific_claim": scientific_claim,
             }
@@ -592,7 +592,7 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
                 ),
                 _scope_row(
                     scheme_id=scheme_id,
-                    scope_role="final_test",
+                    scope_role="target_test",
                     frame=target,
                     mutation_population_policy=population_policy,
                 ),
@@ -654,9 +654,9 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
         source=ndm_amp,
         target=vim_amp,
         group_type="position_group_id",
-        held_out_dimension="protein_background",
-        held_out_value="VIM-2",
-        held_out_class="cross_protein",
+        test_dimension="protein_background",
+        test_value="VIM-2",
+        test_category="cross_protein",
         scientific_claim="NDM-1 to VIM-2 transfer with target labels kept blind",
         population_policy="all_task_rows_per_protein_no_cross_protein_pairing_required",
         model_selection_grouping_key="ndm1_amp_position_cv5",
@@ -670,9 +670,9 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
         source=vim_amp,
         target=ndm_amp,
         group_type="position_group_id",
-        held_out_dimension="protein_background",
-        held_out_value="NDM-1",
-        held_out_class="cross_protein",
+        test_dimension="protein_background",
+        test_value="NDM-1",
+        test_category="cross_protein",
         scientific_claim="VIM-2 to NDM-1 transfer with target labels kept blind",
         population_policy="all_task_rows_per_protein_no_cross_protein_pairing_required",
         model_selection_grouping_key="vim2_amp_position_cv5",
@@ -719,11 +719,11 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
             source=source,
             target=target,
             group_type="mutation_group_id",
-            held_out_dimension="antibiotic",
-            held_out_value=antibiotic,
-            held_out_class="antibiotic_transfer_37C",
+            test_dimension="antibiotic",
+            test_value=antibiotic,
+            test_category="antibiotic_transfer_37C",
             scientific_claim=(
-                f"VIM-2 transfer to held-out {antibiotic} at the Chen-2020 "
+                f"VIM-2 transfer to test antibiotic {antibiotic} at the Chen-2020 "
                 "high screening condition for mutations observed under the "
                 "source antibiotics"
             ),
@@ -771,9 +771,9 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
             source=source,
             target=target,
             group_type="mutation_group_id",
-            held_out_dimension="temperature_c",
-            held_out_value=str(target_temp),
-            held_out_class="temperature_transfer_shared_mutations",
+            test_dimension="temperature_c",
+            test_value=str(target_temp),
+            test_category="temperature_transfer_shared_mutations",
             scientific_claim=(
                 f"VIM-2 AMP transfer from {source_temp} C to {target_temp} C "
                 "using mutations measured at both temperatures"
@@ -822,8 +822,7 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
         ].copy()
         if not target_mutations.issubset(set(source["mutation_group_id"])):
             raise EvaluationPartitionError(
-                "Held-out concentration "
-                f"{concentration} contains source-unseen mutations"
+                f"Test concentration {concentration} contains source-unseen mutations"
             )
         holdout_class = (
             "edge_extrapolation" if concentration in {4.0, 256.0} else "interpolation"
@@ -837,11 +836,11 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
             source=source,
             target=target,
             group_type="mutation_group_id",
-            held_out_dimension="ampicillin_concentration_ug_per_ml",
-            held_out_value=value_label,
-            held_out_class=holdout_class,
+            test_dimension="ampicillin_concentration_ug_per_ml",
+            test_value=value_label,
+            test_category=holdout_class,
             scientific_claim=(
-                f"VIM-2 transfer to held-out AMP concentration {value_label} ug/mL "
+                f"VIM-2 transfer to test AMP concentration {value_label} ug/mL "
                 "for mutations observed at other concentrations"
             ),
             population_policy="target_mutations_only_in_source_and_target",
@@ -856,7 +855,7 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
 
     for scheme_id, (frame, target, group_type, family) in frames.items():
         if family == "nested":
-            _assert_group_partition_integrity(
+            _validate_group_partition(
                 scheme_id=scheme_id,
                 assignments=assignment_frame,
                 expected_groups=set(frame[group_type]),
@@ -866,7 +865,7 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
             source_assignments = subset[
                 subset["split_role"].eq("source_model_selection")
             ]
-            target_assignments = subset[subset["split_role"].eq("final_test")]
+            target_assignments = subset[subset["split_role"].eq("target_test")]
             if source_assignments["group_id"].duplicated().any():
                 raise EvaluationPartitionError(
                     f"{scheme_id} has duplicate source model-selection groups"
@@ -911,8 +910,10 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
         raise EvaluationPartitionError(
             "Partition assignment must not use outcome values"
         )
-    if scheme_frame["held_out_labels_used_for_model_selection"].any():
-        raise EvaluationPartitionError("Held-out labels must remain unavailable")
+    if scheme_frame["test_labels_used_for_model_selection"].any():
+        raise EvaluationPartitionError(
+            "Test labels must remain unavailable during model selection"
+        )
 
     output_dir = root / "data/interim/evaluation_partitions"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -935,9 +936,9 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
             .eq("five_outer_folds_with_grouped_inner_validation")
             .sum()
         ),
-        "source_cv_final_test_scheme_count": int(
+        "source_cv_target_test_scheme_count": int(
             scheme_frame["assignment_family"]
-            .eq("source_only_grouped_cv_then_final_test")
+            .eq("source_only_grouped_cv_then_target_test")
             .sum()
         ),
         "group_assignment_row_count": len(assignment_frame),
@@ -953,8 +954,8 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
             EXPECTED_VIM_2022_MUTATION_GROUP_COUNT - complete_trajectory_count
         ),
         "target_label_policy": (
-            "held-out and cross-protein target labels are not used for model "
-            "selection; target sequence or structure may be supplied at final "
+            "test and cross-protein target labels are not used for model "
+            "selection; target sequence or structure may be supplied during target "
             "inference when required by the representation"
         ),
         "assignment_policy": (
@@ -973,12 +974,12 @@ def prepare_evaluation_partitions(repo_root: Path) -> dict[str, Any]:
         "concentration_policy": (
             "unseen-mutation evaluation keeps complete available trajectories by "
             "mutation group; concentration holdouts use only mutations present in "
-            "the held-out concentration and distinguish interpolation from edge "
+            "the test concentration and distinguish interpolation from edge "
             "extrapolation"
         ),
         "homologue_reporting_policy": (
             "the 217-position Chen 2024 correspondence is used only to define "
-            "held-out reporting populations; the existing source-only cross-protein "
+            "test reporting populations; the existing source-only cross-protein "
             "model-selection partitions are unchanged, and direct equivalent-mutation "
             "reporting is restricted to shared-WT aligned substitutions"
         ),

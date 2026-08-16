@@ -696,10 +696,6 @@ def describe_source_tables(repo_root: Path) -> Mapping[str, object]:
             "2022_sd2_sd3": "Distinct EC50 outcomes with overlap that requires mutation grouping.",
             "numbering": "VIM-2 sheets retain the in-house Gly2 convention.",
         },
-        "next_decision": (
-            "Implement source-specific long-form parsers and validate every wild-type residue "
-            "against the fixed assay sequences before merging datasets."
-        ),
         "outputs": [
             "workbook_metadata.csv",
             "worksheet_metadata.csv",

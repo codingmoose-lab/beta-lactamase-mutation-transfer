@@ -132,7 +132,7 @@ def _prepare_direction_table(
         ].copy()
         if values["observation_id"].duplicated().any():
             raise HomologueBaselineAnalysisError(
-                f"Duplicate final prediction rows for {scheme_id}/{baseline_id}"
+                f"Duplicate target prediction rows for {scheme_id}/{baseline_id}"
             )
         values = values.rename(
             columns={

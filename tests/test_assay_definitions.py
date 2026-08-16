@@ -5,7 +5,7 @@ from betalactamase_transfer.assay_definitions import (
 )
 
 
-def test_stable_id_is_deterministic() -> None:
+def test_stable_id_is_reproducible() -> None:
     assert _stable_id("x", "a", 1) == _stable_id("x", "a", 1)
     assert _stable_id("x", "a", 1) != _stable_id("x", "a", 2)
 

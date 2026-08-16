@@ -550,9 +550,9 @@ def _scope_frames(missense: pd.DataFrame) -> dict[tuple[str, str], pd.DataFrame]
         & vim20["temperature_c"].eq(37.0)
     ]
     frames[("ndm1_to_vim2_amp_source_cv5", "source_model_selection")] = ndm_amp
-    frames[("ndm1_to_vim2_amp_source_cv5", "final_test")] = vim_amp
+    frames[("ndm1_to_vim2_amp_source_cv5", "target_test")] = vim_amp
     frames[("vim2_to_ndm1_amp_source_cv5", "source_model_selection")] = vim_amp
-    frames[("vim2_to_ndm1_amp_source_cv5", "final_test")] = ndm_amp
+    frames[("vim2_to_ndm1_amp_source_cv5", "target_test")] = ndm_amp
 
     high_conditions = {"AMP": 128.0, "CTX": 4.0, "MEM": 0.031}
     high = vim20[vim20["temperature_c"].eq(37.0)].copy()
@@ -570,7 +570,7 @@ def _scope_frames(missense: pd.DataFrame) -> dict[tuple[str, str], pd.DataFrame]
     high = high[high["mutation_group_id"].isin(common)]
     for drug in ("AMP", "CTX", "MEM"):
         scheme = f"vim2_2020_loo_antibiotic_{drug.lower()}"
-        frames[(scheme, "final_test")] = high[high["antibiotic"].eq(drug)]
+        frames[(scheme, "target_test")] = high[high["antibiotic"].eq(drug)]
         frames[(scheme, "source_model_selection")] = high[high["antibiotic"].ne(drug)]
 
     temperatures = vim20[
@@ -591,7 +591,7 @@ def _scope_frames(missense: pd.DataFrame) -> dict[tuple[str, str], pd.DataFrame]
         frames[(scheme, "source_model_selection")] = temperatures[
             temperatures["temperature_c"].eq(source_temp)
         ]
-        frames[(scheme, "final_test")] = temperatures[
+        frames[(scheme, "target_test")] = temperatures[
             temperatures["temperature_c"].eq(target_temp)
         ]
 
@@ -605,7 +605,7 @@ def _scope_frames(missense: pd.DataFrame) -> dict[tuple[str, str], pd.DataFrame]
             & vim22["mutation_group_id"].isin(target_groups)
         ]
         frames[(scheme, "source_model_selection")] = source
-        frames[(scheme, "final_test")] = target
+        frames[(scheme, "target_test")] = target
     return frames
 
 

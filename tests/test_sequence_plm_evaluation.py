@@ -31,14 +31,14 @@ def _embedding_index() -> pd.DataFrame:
     )
 
 
-def test_validate_inputs_requires_canonical_embedding_rows() -> None:
+def test_validate_inputs_requires_contiguous_embedding_rows() -> None:
     index = _embedding_index()
     index["embedding_row"] = [1, 0]
 
     observations = pd.DataFrame({"score_analysis": [0.0]})
     membership = pd.DataFrame({"observation_id": ["obs_1"]})
 
-    with pytest.raises(SequencePLMEvaluationError, match="canonical contiguous"):
+    with pytest.raises(SequencePLMEvaluationError, match="contiguous range"):
         _validate_inputs(
             observations,
             membership,
@@ -141,7 +141,7 @@ def test_site_delta_uses_requested_hidden_state_and_vim2_residue_identity() -> N
     assert np.all(layer_36 == 2.0)
 
 
-def test_joint_model_selection_chooses_hidden_state_and_alpha_from_validation(
+def test_model_selection_chooses_hidden_state_alpha_pair_from_validation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     train = pd.DataFrame({"score_analysis": [0.0, 0.0]})

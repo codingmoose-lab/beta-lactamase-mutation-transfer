@@ -13,7 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="session", autouse=True)
 def prepared_data() -> None:
-    """Generate deterministic intermediate tables once for integration tests."""
+    """Generate intermediate tables once for integration tests."""
     build_sequence_mapping(REPO_ROOT)
     describe_source_tables(REPO_ROOT)
     extract_mutation_measurements(REPO_ROOT)

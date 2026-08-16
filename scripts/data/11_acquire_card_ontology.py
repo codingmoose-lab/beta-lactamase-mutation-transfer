@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserve and validate the frozen official CARD ontology 4.0.1 source.
+# Validate and retain the CARD ontology 4.0.1 source used by the study.
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(
         description=(
-            "Preserve and validate the frozen official CARD ontology 4.0.1 source."
+            "Validate and retain the CARD ontology 4.0.1 source used by the study."
         )
     )
     parser.add_argument("--repo-root", type=Path, default=ROOT)

@@ -121,7 +121,7 @@ def test_assay_crosswalk_rejects_unknown_code(tmp_path: Path) -> None:
     terms = parse_aro_obo(_write_obo(tmp_path))
     table = tmp_path / "condition_score_statistics.csv"
     table.write_text("antibiotic\nXYZ\n", encoding="utf-8")
-    with pytest.raises(CARDContextError, match="without frozen CARD crosswalk"):
+    with pytest.raises(CARDContextError, match="without a CARD crosswalk"):
         _assay_crosswalk_rows(table, terms)
 
 

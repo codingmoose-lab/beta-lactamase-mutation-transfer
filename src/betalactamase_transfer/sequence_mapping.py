@@ -26,7 +26,7 @@ class SequenceMappingError(RuntimeError):
 
 @dataclass(frozen=True)
 class GenBankTargetSpec:
-    """Explicit description of an assay construct feature in a GenBank file."""
+    """Description of an assay construct feature in a GenBank file."""
 
     protein_id: str
     feature_types: Tuple[str, ...]
@@ -286,7 +286,7 @@ def extract_genbank_target(
         source_file=str(path),
         sequence=sequence,
         description=description,
-        selection_status="explicit_feature_match",
+        selection_status="genbank_assay_construct_feature_match",
         feature_type=feature.type,
         feature_label=label_text,
         feature_location=str(feature.location),
@@ -562,7 +562,7 @@ def _mapping_rows(
     pdb_entity: SequenceRecord,
     scheme_rows: Sequence[PDBSchemeRow],
 ) -> List[Dict[str, object]]:
-    """Build assay→UniProt→PDB chain mappings with explicit gaps."""
+    """Build assay→UniProt→PDB chain mappings while retaining alignment gaps."""
     assay_consensus = alignment_consensus(uniprot.sequence, assay.sequence)
     pdb_consensus = alignment_consensus(uniprot.sequence, pdb_entity.sequence)
     if assay_consensus.ambiguous_query_positions:

@@ -13,7 +13,7 @@ from betalactamase_transfer import card_context
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_frozen_card_source_and_prepared_outputs_if_available() -> None:
+def test_card_source_and_prepared_outputs_if_available() -> None:
     raw_dir = REPO_ROOT / "data/raw/card/ontology" / card_context.CARD_ONTOLOGY_VERSION
     context_dir = REPO_ROOT / "data/interim/card_context"
     archive = raw_dir / "card-ontology.tar.bz2"

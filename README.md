@@ -1,6 +1,6 @@
 # Beta-lactamase mutation transfer
 
-Computational study of mutation effects across NDM-1 and VIM-2 under antibiotic, concentration, and temperature conditions. The repository prepares published deep-mutational-scanning measurements, reconciles residue numbering across assay and reference sources, prepares experimental and AlphaFold structures, and records catalytic and AMR annotations for sequence- and structure-informed mutation-effect analyses.
+Computational study of mutation effects across NDM-1 and VIM-2 under antibiotic, concentration, and temperature conditions. The repository prepares published deep-mutational-scanning measurements, maps residue numbering between assay and reference sources, prepares experimental and AlphaFold structures, and records catalytic and AMR annotations for sequence- and structure-informed mutation-effect analyses.
 
 ## Reproducible research workflow
 
@@ -39,7 +39,7 @@ Acquisition commands that contact external services or import a separately downl
 
 ### External secondary-structure dependency
 
-Secondary-structure regeneration requires a working `mkdssp` 4.x installation in addition to the Python dependencies. The study environment recorded `mkdssp` 4.6.1. The executable may be on `PATH`, at `~/.local/bin/mkdssp`, or supplied explicitly with `python scripts/data/15_prepare_secondary_structure.py --mkdssp /absolute/path/to/mkdssp`. The libcifpp Chemical Component Dictionary used by `mkdssp` must also be available. Regeneration fails on an unsupported DSSP major version, missing output, unexpected residue counts, coordinate-identity mismatches, or `Unknown compound:` warnings.
+Secondary-structure regeneration requires a working `mkdssp` 4.x installation in addition to the Python dependencies. The study environment recorded `mkdssp` 4.6.1. The executable may be on `PATH`, at `~/.local/bin/mkdssp`, or provided with `python scripts/data/15_prepare_secondary_structure.py --mkdssp /absolute/path/to/mkdssp`. The libcifpp Chemical Component Dictionary used by `mkdssp` must also be available. Regeneration fails on an unsupported DSSP major version, missing output, unexpected residue counts, coordinate-identity mismatches, or `Unknown compound:` warnings.
 
 The current programs produce linked tables under:
 
@@ -54,11 +54,11 @@ The current programs produce linked tables under:
 - `data/interim/residue_evidence/`: one selected-reference row per assay residue, the complete publication-derived NDM-1/VIM-2 aligned-position correspondence, and the separate Chen et al. (2024) reported WT-reversion comparison positions;
 - `data/interim/structural_descriptors/`: experimental-coordinate residue descriptors and pair geometry;
 - `data/interim/secondary_structure/`: retained DSSP assignments for selected experimental chains;
-- `data/processed/`: checked research tables plus an explicit observation-column role declaration for later modelling;
+- `data/processed/`: checked research tables plus declared observation-column roles for later modelling;
 - `data/interim/task_definitions/`: task scopes and evaluation rules;
 - `data/interim/evaluation_partitions/`: leakage-controlled group assignments and partition audits;
 - `data/interim/modelling_views/`: modelling-view observation membership, input contracts, and matched modality-eligible populations;
-- `data/interim/baseline_evaluation/`: deterministic baseline predictions, grouped uncertainty, and matched homologue analyses;
+- `data/interim/baseline_evaluation/`: baseline predictions, grouped uncertainty, and matched homologue analyses;
 - `data/interim/sequence_neighbourhood_evaluation/`: mutation/condition and amino-acid-neighbourhood comparisons on the frozen core schemes;
 - `data/interim/sequence_plm_embeddings/`: outcome-blind ESMC mutation-site and wild-type residue embeddings plus extraction provenance;
 - `data/interim/sequence_plm_evaluation/`: ESMC site-delta predictions, metrics, and model-selection records.
@@ -83,7 +83,7 @@ The current programs produce linked tables under:
 - Sequence-to-PDB correspondence is accepted only where all equally scoring optimal alignments agree. The known NDM-1/3SPU tie is confined to unmodelled PDB entity position 1; no coordinate-bearing residue is resolved by arbitrary alignment order.
 - Processed observation columns have declared roles so outcomes, grouping fields, evaluation metadata, and provenance cannot silently become default predictive inputs.
 - Task-definition preparation freezes task meaning before partitions are generated: cross-protein model selection uses source-protein validation only, VIM-2 concentration and condition transfer remain distinct from unseen-mutation generalisation, and direct paired equivalent-mutation reporting uses only the 81 shared-WT aligned positions without consulting mutation-effect values.
-- Evaluation-partition preparation assigns residue-position or mutation groups according to the scientific claim. Assignment is deterministic, does not use mutation-effect scores, and keeps held-out labels unavailable during model selection.
+- Evaluation-partition preparation assigns residue-position or mutation groups according to the scientific claim. Group assignment does not use mutation-effect scores and keeps held-out labels unavailable during model selection.
 - Modelling-view preparation fixes modelling input roles and exact scheme membership before feature generation. Biological reference fields reserved for later validation do not become default predictors, and modality comparisons use matched eligible rows.
 
 See `docs/` for assay definitions, residue numbering, experimental-structure selection, evaluation design, sequence-model analyses, repository layout, and execution details.

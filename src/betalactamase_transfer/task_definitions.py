@@ -102,7 +102,7 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
         "priority": "secondary",
         "scientific_question": (
             "How well do VIM-2 mutation-effect relationships transfer across "
-            "antibiotic or temperature conditions when the held-out condition is "
+            "antibiotic or temperature conditions when the test condition is "
             "defined?"
         ),
         "target_field": "score_analysis",
@@ -120,7 +120,7 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
         "scientific_question": (
             "How does VIM-2 mutation effect change with ampicillin concentration, "
             "and can the concentration-response relationship generalise to unseen "
-            "mutations or held-out concentrations?"
+            "mutations or test concentrations?"
         ),
         "target_field": "score_analysis",
         "target_scale_policy": "retain_source_assay_scale_with_publication_lower_floor",
@@ -251,7 +251,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         ),
         "status": "ready_for_partition_design",
         "partition_unit": "position_group_id",
-        "held_out_dimension": "assay residue position",
+        "test_dimension": "assay residue position",
         "same_mutation_may_cross_partitions": False,
         "same_position_may_cross_partitions": False,
         "same_condition_may_cross_partitions": True,
@@ -269,9 +269,9 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         "applies_to": "ndm1_to_vim2_amp_transfer;vim2_to_ndm1_amp_transfer",
         "status": "ready_for_partition_design",
         "partition_unit": (
-            "source position_group_id for model selection; protein for final test"
+            "source position_group_id for model selection; target protein for testing"
         ),
-        "held_out_dimension": "protein background",
+        "test_dimension": "protein background",
         "same_mutation_may_cross_partitions": False,
         "same_position_may_cross_partitions": False,
         "same_condition_may_cross_partitions": False,
@@ -281,7 +281,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         ),
         "required_rule": (
             "validation is drawn only from the source protein; the target protein is "
-            "untouched until final evaluation"
+            "unused until target-protein testing"
         ),
     },
     {
@@ -289,7 +289,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         "applies_to": "vim2_2020_condition_transfer",
         "status": "ready_for_partition_design",
         "partition_unit": "antibiotic",
-        "held_out_dimension": "antibiotic identity",
+        "test_dimension": "antibiotic identity",
         "same_mutation_may_cross_partitions": True,
         "same_position_may_cross_partitions": True,
         "same_condition_may_cross_partitions": False,
@@ -300,7 +300,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         ),
         "required_rule": (
             "restrict the antibiotic holdout to 37 C, where AMP, CTX, and MEM are "
-            "all represented; all rows for the held-out antibiotic remain outside "
+            "all represented; all rows for the test antibiotic remain outside "
             "training"
         ),
     },
@@ -309,7 +309,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         "applies_to": "vim2_2020_condition_transfer",
         "status": "ready_for_partition_design",
         "partition_unit": "temperature_c within VIM-2 AMP rows",
-        "held_out_dimension": "temperature",
+        "test_dimension": "temperature",
         "same_mutation_may_cross_partitions": True,
         "same_position_may_cross_partitions": True,
         "same_condition_may_cross_partitions": False,
@@ -328,7 +328,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         "applies_to": "vim2_2022_concentration_response",
         "status": "ready_for_partition_design",
         "partition_unit": "mutation_group_id",
-        "held_out_dimension": "mutation identity",
+        "test_dimension": "mutation identity",
         "same_mutation_may_cross_partitions": False,
         "same_position_may_cross_partitions": True,
         "same_condition_may_cross_partitions": True,
@@ -343,7 +343,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         "applies_to": "vim2_2022_concentration_response",
         "status": "ready_for_partition_design",
         "partition_unit": "concentration",
-        "held_out_dimension": "ampicillin concentration",
+        "test_dimension": "ampicillin concentration",
         "same_mutation_may_cross_partitions": True,
         "same_position_may_cross_partitions": True,
         "same_condition_may_cross_partitions": False,
@@ -353,7 +353,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
             "interior and edge concentrations must be reported separately"
         ),
         "required_rule": (
-            "the held-out concentration remains outside training; do not describe "
+            "the test concentration remains outside training; do not describe "
             "this regime as unseen-mutation generalisation"
         ),
     },
@@ -362,7 +362,7 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         "applies_to": "chen2024_wt_reversion_analysis",
         "status": "ready_for_analysis_design",
         "partition_unit": "not_applicable",
-        "held_out_dimension": "not_applicable",
+        "test_dimension": "not_applicable",
         "same_mutation_may_cross_partitions": False,
         "same_position_may_cross_partitions": False,
         "same_condition_may_cross_partitions": False,
@@ -380,16 +380,16 @@ EVALUATION_REGIMES: tuple[Mapping[str, Any], ...] = (
         "applies_to": "ndm1_to_vim2_amp_transfer;vim2_to_ndm1_amp_transfer",
         "status": "ready_for_reporting_population",
         "partition_unit": (
-            "reuse cross-protein source-only model-selection partitions; final "
+            "reuse cross-protein source-only model-selection partitions; target "
             "reporting pairs are keyed by homologue_position_id and mutant"
         ),
-        "held_out_dimension": "protein background at directly comparable substitutions",
+        "test_dimension": "protein background at directly comparable substitutions",
         "same_mutation_may_cross_partitions": True,
         "same_position_may_cross_partitions": True,
         "same_condition_may_cross_partitions": False,
         "target_protein_visible_during_model_selection": False,
         "interpretation": (
-            "final held-out transfer performance on identical WT-to-mutant "
+            "target-protein transfer performance on identical WT-to-mutant "
             "substitutions at aligned positions with the same WT residue"
         ),
         "required_rule": (

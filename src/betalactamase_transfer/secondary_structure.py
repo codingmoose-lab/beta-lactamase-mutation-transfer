@@ -92,9 +92,9 @@ def _reduce_dssp_class(code: str) -> str:
     raise SecondaryStructureError(f"Unexpected DSSP class: {code!r}")
 
 
-def _resolve_mkdssp(explicit: Path | None) -> Path:
-    if explicit is not None:
-        candidate = explicit.expanduser().resolve()
+def _resolve_mkdssp(supplied_path: Path | None) -> Path:
+    if supplied_path is not None:
+        candidate = supplied_path.expanduser().resolve()
         if not candidate.is_file():
             raise SecondaryStructureError(f"mkdssp not found: {candidate}")
         return candidate
@@ -108,7 +108,7 @@ def _resolve_mkdssp(explicit: Path | None) -> Path:
         return local.resolve()
 
     raise SecondaryStructureError(
-        "mkdssp was not found in PATH or ~/.local/bin; pass --mkdssp explicitly"
+        "mkdssp was not found in PATH or ~/.local/bin; supply --mkdssp"
     )
 
 

@@ -465,7 +465,7 @@ def _nested_evaluation(
             raise BaselineEvaluationError(
                 f"Incomplete nested split for {scheme_id} iteration {iteration}"
             )
-        final_fit = pd.concat([train, validation], ignore_index=True)
+        refit_data = pd.concat([train, validation], ignore_index=True)
         for baseline_id in _scheme_baselines(scheme):
             alpha: float | None = None
             if baseline_id.startswith("ridge_"):
@@ -495,7 +495,7 @@ def _nested_evaluation(
                         "selected": True,
                     }
                 )
-            predictions = _predict_baseline(baseline_id, final_fit, test, alpha=alpha)
+            predictions = _predict_baseline(baseline_id, refit_data, test, alpha=alpha)
             prediction_rows.extend(
                 _prediction_records(
                     test,
@@ -537,7 +537,7 @@ def _direct_condition_predictions(
 ) -> list[Mapping[str, object]]:
     regime = str(scheme["regime_id"])
     source = frame[frame["scope_role"].eq("source_model_selection")].copy()
-    target = frame[frame["scope_role"].eq("final_test")].copy()
+    target = frame[frame["scope_role"].eq("target_test")].copy()
     if source.empty or target.empty:
         return []
 
@@ -555,8 +555,8 @@ def _direct_condition_predictions(
                 predictions.to_numpy(dtype=float),
                 scheme=scheme,
                 baseline_id=ANTIBIOTIC_DIRECT_BASELINE_ID,
-                evaluation_iteration="final",
-                evaluation_role="final_test",
+                evaluation_iteration="target",
+                evaluation_role="target_test",
                 alpha=None,
             )
         )
@@ -587,8 +587,8 @@ def _direct_condition_predictions(
                 predictions,
                 scheme=scheme,
                 baseline_id=TEMPERATURE_DIRECT_BASELINE_ID,
-                evaluation_iteration="final",
-                evaluation_role="final_test",
+                evaluation_iteration="target",
+                evaluation_role="target_test",
                 alpha=None,
             )
         )
@@ -640,8 +640,8 @@ def _direct_condition_predictions(
                     np.asarray(predictions, dtype=float),
                     scheme=scheme,
                     baseline_id=baseline_id,
-                    evaluation_iteration="final",
-                    evaluation_role="final_test",
+                    evaluation_iteration="target",
+                    evaluation_role="target_test",
                     alpha=None,
                 )
             )
@@ -659,21 +659,21 @@ def _source_cv_evaluation(
         scheme_assignments["split_role"].eq("source_model_selection")
     ]
     target_assignments = scheme_assignments[
-        scheme_assignments["split_role"].eq("final_test")
+        scheme_assignments["split_role"].eq("target_test")
     ]
     fold_by_group = dict(
         zip(source_assignments["group_id"], source_assignments["cv_fold"])
     )
     source = frame[frame["scope_role"].eq("source_model_selection")].copy()
-    target = frame[frame["scope_role"].eq("final_test")].copy()
+    target = frame[frame["scope_role"].eq("target_test")].copy()
     if source.empty or target.empty:
-        raise BaselineEvaluationError(f"Missing source/final-test rows for {scheme_id}")
+        raise BaselineEvaluationError(f"Missing source/test rows for {scheme_id}")
     source["source_cv_fold"] = source["group_id"].map(fold_by_group)
     if source["source_cv_fold"].isna().any():
         raise BaselineEvaluationError(f"Unassigned source CV rows for {scheme_id}")
     target_groups = set(target_assignments["group_id"])
     if set(target["group_id"]) != target_groups:
-        raise BaselineEvaluationError(f"Final-test group mismatch for {scheme_id}")
+        raise BaselineEvaluationError(f"Target-test group mismatch for {scheme_id}")
 
     prediction_rows: list[Mapping[str, object]] = []
     selection_rows: list[Mapping[str, object]] = []
@@ -691,7 +691,7 @@ def _source_cv_evaluation(
                     {
                         "scheme_id": scheme_id,
                         "baseline_id": baseline_id,
-                        "evaluation_iteration": "final",
+                        "evaluation_iteration": "target",
                         "selection_scope": "source_cv",
                         **row,
                         "selected": float(row["alpha"]) == alpha,
@@ -701,7 +701,7 @@ def _source_cv_evaluation(
                 {
                     "scheme_id": scheme_id,
                     "baseline_id": baseline_id,
-                    "evaluation_iteration": "final",
+                    "evaluation_iteration": "target",
                     "selection_scope": "selected_setting",
                     "alpha": alpha,
                     "cv_fold": "",
@@ -716,8 +716,8 @@ def _source_cv_evaluation(
                 predictions,
                 scheme=scheme,
                 baseline_id=baseline_id,
-                evaluation_iteration="final",
-                evaluation_role="final_test",
+                evaluation_iteration="target",
+                evaluation_role="target_test",
                 alpha=alpha,
             )
         )
@@ -831,7 +831,7 @@ def prepare_baseline_predictions(
             scheme_predictions, scheme_selection = _nested_evaluation(
                 scheme, frame, assignments
             )
-        elif family == "source_only_grouped_cv_then_final_test":
+        elif family == "source_only_grouped_cv_then_target_test":
             scheme_predictions, scheme_selection = _source_cv_evaluation(
                 scheme, frame, assignments
             )
@@ -892,7 +892,7 @@ def run_baseline_evaluation(repo_root: Path) -> Mapping[str, object]:
         "ridge_selection_metric": "validation_mae",
         "source_target_policy": (
             "cross-protein and condition-transfer settings are selected from source "
-            "model-selection rows only; held-out target labels are used only after "
+            "model-selection rows only; target test labels are used only after "
             "settings are fixed"
         ),
         "uncertainty_status": (

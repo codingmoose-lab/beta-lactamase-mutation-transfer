@@ -72,7 +72,7 @@ def test_modelling_view_outputs_and_scientific_contracts() -> None:
 
     vim = comparisons[
         comparisons["scheme_id"].eq("ndm1_to_vim2_amp_source_cv5")
-        & comparisons["scope_role"].eq("final_test")
+        & comparisons["scope_role"].eq("target_test")
     ]
     counts = dict(zip(vim["comparison_population"], vim["row_count"]))
     assert counts["sequence_full"] == 5_023

@@ -4,9 +4,9 @@
 
 The protein-language-model analysis tests whether pretrained protein sequence
 information improves mutation-effect prediction beyond mutation identity,
-assay condition, and explicit local amino-acid neighbourhood.
+assay condition, and local amino-acid neighbourhood.
 
-The analysis reuses the frozen task definitions and leakage-resistant
+The analysis reuses the predefined task definitions and leakage-resistant
 evaluation partitions used by the preceding baseline and sequence-neighbourhood
 comparisons.
 
@@ -20,7 +20,7 @@ provenance stored with the extracted embeddings.
 
 ## Pretrained model
 
-The frozen source model is `biohub/ESMC-600M` at revision
+The pretrained model is `biohub/ESMC-600M` at revision
 `a7e82012c83126b9eedb055fea9fa84b6c02f094`.
 
 The extracted hidden-state indices are 9, 18, 27, and 36, with hidden size
@@ -33,17 +33,16 @@ changed at exactly the requested residue and ESMC hidden states are extracted
 at the corresponding mutant-residue token. Wild-type residue hidden states are
 extracted once for each assay construct.
 
-The PLM feature used by the current evaluator is:
+The PLM feature is:
 
 `delta_h = h_mutant_site - h_wild_type_site`
 
-The mutation-to-embedding index is deterministic and records protein identity,
-assay mutation, assay position, wild-type residue, mutant residue, and
-mutant-sequence SHA-256.
+The mutation-to-embedding index records protein identity, assay mutation, assay
+position, wild-type residue, mutant residue, and mutant-sequence SHA-256.
 
 ## Extraction provenance
 
-The production extraction used:
+The extraction environment used:
 
 - Python 3.11.15;
 - PyTorch package metadata 2.13.0;
@@ -59,8 +58,7 @@ The production extraction used:
 - tqdm 4.68.2;
 - NVIDIA GeForce RTX 4060 Ti.
 
-The extraction summary remains the authoritative record of the successful
-runtime. No historical PyTorch package index or direct installation URL is
+The extraction summary records the runtime used for the stored embeddings. No historical PyTorch package index or direct installation URL is
 asserted because that information was not retained by the environment.
 
 The extracted arrays contain 10,086 unique protein-specific missense
@@ -91,12 +89,12 @@ because source and target populations are already restricted to the
 study-defined comparison condition.
 
 ESMC features are standardized using fitting data only. Means and standard
-deviations are recomputed within each permitted model-selection or final-fit
+deviations are recomputed within each permitted model-selection or refit
 population.
 
 ## Evaluation design
 
-The current core evaluation schemes are:
+The evaluated schemes are:
 
 - `ndm1_position_nested5`;
 - `vim2_2020_position_nested5`;
@@ -110,19 +108,19 @@ generalisation to unseen mutations, not unseen positions.
 
 Cross-protein transfer selects model settings using source-protein grouped
 cross-validation and evaluates the target protein only after source-side model
-selection is complete. Final held-out labels are not used for model selection.
+selection is complete. Target-protein test labels are not used for model selection.
 
-The evaluator jointly selects the hidden-state index and ridge regularisation
-from permitted validation data only. The hidden-state candidates are the four
-predeclared extracted states 9, 18, 27, and 36. The ESMC-specific ridge grid is
+The hidden-state index and ridge regularisation are selected as a pair using
+validation data only. The candidate hidden states are the four extracted states
+9, 18, 27, and 36 defined before evaluation. The ESMC-specific ridge grid is
 `1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100, 1e3, 1e4, 1e5, 1e6`. Selection minimizes
-mean validation MAE; exact ties are resolved deterministically by lower
-hidden-state index and then lower alpha.
+mean validation MAE; exact ties are resolved by lower hidden-state index and
+then lower alpha.
 
 For nested within-protein evaluation, each outer iteration selects its own
 hidden-state/alpha pair using only that iteration's inner validation data. For
 cross-protein transfer, one pair is selected using source-protein grouped
-cross-validation before the target protein is evaluated. Held-out labels do not
+cross-validation before the target protein is evaluated. Test labels do not
 contribute to either selection criterion. If nested outer iterations select
 different hidden states, the pooled metric row is labelled `mixed` rather than
 being attributed to a single state.
@@ -133,14 +131,14 @@ Primary regression reporting uses MAE, RMSE, Pearson correlation, and Spearman
 correlation.
 
 Comparisons with `mutation_condition_ridge` and
-`sequence_neighbourhood_ridge` use identical held-out observations and the
-grouping unit defined by the frozen evaluation scheme.
+`sequence_neighbourhood_ridge` use identical test observations and the
+grouping unit defined by the evaluation scheme.
 
 ## Validation requirements
 
-Before ESMC evaluation is accepted, the implementation verifies the frozen ESMC
+Before ESMC evaluation is accepted, the implementation verifies the ESMC
 model identity and revision, hidden-state indices, embedding dimensions,
-embedding-index digest, canonical embedding rows, protein identities,
+embedding-index digest, contiguous embedding rows, protein identities,
 assay-sequence provenance, finite biological embedding ranges, absence of
 outcomes from modelling-membership tables, and availability of all core
 evaluation schemes.

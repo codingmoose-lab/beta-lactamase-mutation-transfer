@@ -879,7 +879,6 @@ def extract_mutation_measurements(repo_root: Path) -> Mapping[str, object]:
             "ec50_measurements.csv",
             "mutation_structure_mapping.csv",
         ],
-        "next_decision": "Review validation, missing-score, duplicate, and structure-coverage counts before score harmonisation or final chain selection.",
     }
     validation_summary = {
         "sequence_validation_status": _count(primary, "sequence_validation_status"),

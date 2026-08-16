@@ -46,7 +46,7 @@ def test_evaluation_partitions_real_data_if_available() -> None:
     assert "stage" not in summary
     assert summary["scheme_count"] == 17
     assert summary["nested_group_scheme_count"] == 3
-    assert summary["source_cv_final_test_scheme_count"] == 14
+    assert summary["source_cv_target_test_scheme_count"] == 14
     assert summary["temperature_shared_mutation_group_count"] == 5016
     assert summary["temperature_25C_only_mutation_group_count"] == 12
     assert summary["temperature_37C_only_mutation_group_count"] == 7
@@ -56,7 +56,7 @@ def test_evaluation_partitions_real_data_if_available() -> None:
     assert "target sequence or structure" in summary["target_label_policy"]
 
     assert schemes["scheme_id"].is_unique
-    assert not schemes["held_out_labels_used_for_model_selection"].any()
+    assert not schemes["test_labels_used_for_model_selection"].any()
     assert not schemes["assignment_uses_outcome_values"].any()
 
     headline = schemes[schemes["priority"].eq("headline")]
@@ -67,7 +67,7 @@ def test_evaluation_partitions_real_data_if_available() -> None:
 
     ndm_target = scopes[
         scopes["scheme_id"].eq("ndm1_to_vim2_amp_source_cv5")
-        & scopes["scope_role"].eq("final_test")
+        & scopes["scope_role"].eq("target_test")
     ].iloc[0]
     assert int(ndm_target["row_count"]) == 5023
     assert int(ndm_target["experimental_structure_eligible_count"]) == 4324
@@ -89,9 +89,9 @@ def test_evaluation_partitions_real_data_if_available() -> None:
     ]
     assert len(concentration_schemes) == 7
     edge = concentration_schemes[
-        concentration_schemes["held_out_class"].eq("edge_extrapolation")
+        concentration_schemes["test_category"].eq("edge_extrapolation")
     ]
-    assert set(edge["held_out_value"].astype(int)) == {4, 256}
+    assert set(edge["test_value"].astype(int)) == {4, 256}
 
     within = assignments[assignments["scheme_id"].eq("ndm1_position_nested5")]
     assert set(within["split_role"]) == {"train", "validation", "test"}
@@ -101,7 +101,7 @@ def test_evaluation_partitions_real_data_if_available() -> None:
 
     transfer = assignments[assignments["scheme_id"].eq("ndm1_to_vim2_amp_source_cv5")]
     source = transfer[transfer["split_role"].eq("source_model_selection")]
-    target = transfer[transfer["split_role"].eq("final_test")]
+    target = transfer[transfer["split_role"].eq("target_test")]
     assert source["group_id"].nunique() == 270
     assert target["group_id"].nunique() == 267
     assert set(source["cv_fold"].dropna().astype(int)) == {0, 1, 2, 3, 4}

@@ -36,7 +36,7 @@ class SequencePLMEmbeddingError(RuntimeError):
 
 @dataclass(frozen=True)
 class EmbeddingConfig:
-    """Frozen runtime choices for ESMC embedding extraction."""
+    """Runtime settings for ESMC embedding extraction."""
 
     model_id: str = MODEL_ID
     revision: str = MODEL_REVISION
@@ -221,7 +221,7 @@ def prepare_sequence_plm_embedding_index(
         "primary_hidden_state_index": 36,
         "candidate_hidden_state_policy": (
             "quarter-depth hidden-state indices 9, 18, 27, and 36 are fixed "
-            "before outcome-based model selection; final-test labels are not "
+            "before outcome-based model selection; test labels are not "
             "used to choose among them"
         ),
     }

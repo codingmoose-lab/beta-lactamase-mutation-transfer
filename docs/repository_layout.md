@@ -305,7 +305,12 @@ beta-lactamase-mutation-transfer
 │     ├─ 22_analyze_homologue_baseline_transfer.py
 │     ├─ 23_evaluate_sequence_neighbourhood.py
 │     ├─ 24_prepare_sequence_plm_embeddings.py
-│     └─ 25_evaluate_sequence_plm.py
+│     ├─ 25_evaluate_sequence_plm.py
+│     ├─ 26_compare_sequence_models.py
+│     ├─ 27_evaluate_experimental_structure.py
+│     ├─ 28_compare_structure_matched_models.py
+│     ├─ 29_analyze_biological_errors.py
+│     └─ 30_prepare_residue_graphs.py
 ├─ src
 │  └─ betalactamase_transfer
 │     ├─ __init__.py
@@ -314,19 +319,24 @@ beta-lactamase-mutation-transfer
 │     ├─ assay_definitions.py
 │     ├─ baseline_evaluation.py
 │     ├─ baseline_uncertainty.py
+│     ├─ biological_error_analysis.py
 │     ├─ card_context.py
 │     ├─ evaluation_partitions.py
+│     ├─ experimental_structure_evaluation.py
 │     ├─ homologue_baseline_analysis.py
 │     ├─ mcsa_annotations.py
 │     ├─ mcsa_correspondence.py
 │     ├─ mcsa_reference_sequences.py
 │     ├─ modelling_views.py
+│     ├─ structure_matched_model_comparison.py
 │     ├─ mutation_measurements.py
 │     ├─ processed_tables.py
 │     ├─ protein_structures.py
 │     ├─ residue_evidence.py
+│     ├─ residue_graphs.py
 │     ├─ secondary_structure.py
 │     ├─ sequence_mapping.py
+│     ├─ sequence_model_comparison.py
 │     ├─ sequence_neighbourhood_evaluation.py
 │     ├─ sequence_plm_embeddings.py
 │     ├─ sequence_plm_evaluation.py
@@ -344,10 +354,14 @@ beta-lactamase-mutation-transfer
    ├─ test_baseline_evaluation.py
    ├─ test_baseline_evaluation_integration.py
    ├─ test_baseline_uncertainty.py
+   ├─ test_biological_error_analysis.py
+   ├─ test_biological_error_analysis_integration.py
    ├─ test_card_context.py
    ├─ test_card_context_integration.py
    ├─ test_evaluation_partitions.py
    ├─ test_evaluation_partitions_integration.py
+   ├─ test_experimental_structure_evaluation.py
+   ├─ test_experimental_structure_evaluation_integration.py
    ├─ test_homologue_baseline_analysis.py
    ├─ test_homologue_baseline_analysis_integration.py
    ├─ test_mcsa_annotations.py
@@ -356,6 +370,8 @@ beta-lactamase-mutation-transfer
    ├─ test_mcsa_reference_sequences.py
    ├─ test_modelling_views.py
    ├─ test_modelling_views_integration.py
+   ├─ test_structure_matched_model_comparison.py
+   ├─ test_structure_matched_model_comparison_integration.py
    ├─ test_mutation_measurements.py
    ├─ test_mutation_measurements_integration.py
    ├─ test_processed_tables.py
@@ -364,10 +380,14 @@ beta-lactamase-mutation-transfer
    ├─ test_protein_structures_integration.py
    ├─ test_residue_evidence.py
    ├─ test_residue_evidence_integration.py
+   ├─ test_residue_graphs.py
+   ├─ test_residue_graphs_integration.py
    ├─ test_secondary_structure.py
    ├─ test_secondary_structure_integration.py
    ├─ test_sequence_mapping.py
    ├─ test_sequence_mapping_integration.py
+   ├─ test_sequence_model_comparison.py
+   ├─ test_sequence_model_comparison_integration.py
    ├─ test_sequence_neighbourhood_evaluation.py
    ├─ test_sequence_neighbourhood_evaluation_integration.py
    ├─ test_sequence_plm_embeddings.py
@@ -388,7 +408,6 @@ beta-lactamase-mutation-transfer
 
 The `data` name is intentional. These files are executable commands whose purpose is acquisition, source inspection, curation, mapping, preparation, biological annotation, pre-modelling task definition, evaluation-partition preparation, or modelling-view preparation. They are kept separate from reusable implementation code under `src/`.
 
-Later modelling work should be added only when it begins. Suitable locations are `scripts/features/`, `scripts/models/`, and `scripts/evaluation/`, with reusable implementation code placed under the Python package. Empty future directories are not created solely for appearance.
 
 ## `src/betalactamase_transfer/`
 
@@ -397,7 +416,7 @@ This package contains reusable scientific and data-processing functions. The pac
 ## `data/`
 
 - `raw/` contains locally retained source files from publications and biological databases;
-- `interim/` contains generated source-specific preparation tables, task-definition preparation task definitions, evaluation-partition preparation evaluation partitions, and modelling-view preparation modelling-view contracts;
-- `processed/` contains the checked processed-table preparation research tables. task-definition, evaluation-partition, and modelling-view preparation read these tables without changing them. Evaluation group assignments are stored under `data/interim/evaluation_partitions/`, and exact scheme membership/input contracts are stored under `data/interim/modelling_views/`; embeddings and model-specific tensors are not created yet.
+- `interim/` contains generated preparation tables, task definitions, evaluation partitions, modelling-view contracts, sequence embeddings, predictions, metrics, and model-comparison outputs;
+- `processed/` contains the checked observation, assay, residue, and residue-pair tables used by the modelling analyses.
 
-The large local data directories are excluded from ordinary Git history. Code, tests, documentation, and small configuration files are version controlled; source publications, database downloads, and generated tables remain local unless a later release plan deliberately packages a redistributable subset.
+The large local data directories are excluded from ordinary Git history. Code, tests, documentation, and small configuration files are version controlled; source publications, database downloads, and generated scientific tables remain local.

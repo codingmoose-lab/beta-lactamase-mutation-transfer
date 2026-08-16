@@ -61,7 +61,7 @@ def test_source_cv_assignments_keep_target_out_of_source_folds() -> None:
     )
     assert SOURCE_CV_FOLD_COUNT == 5
     source_rows = [row for row in rows if row["split_role"] == "source_model_selection"]
-    target_rows = [row for row in rows if row["split_role"] == "final_test"]
+    target_rows = [row for row in rows if row["split_role"] == "target_test"]
     assert {row["group_id"] for row in source_rows} == set(source)
     assert {row["group_id"] for row in target_rows} == set(target)
     assert all(row["cv_fold"] in range(5) for row in source_rows)

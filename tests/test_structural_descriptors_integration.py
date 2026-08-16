@@ -70,8 +70,14 @@ def test_structural_descriptors_real_data_if_available(tmp_path: Path) -> None:
     assert (pairs["left_assay_position"] < pairs["right_assay_position"]).all()
     assert (pairs["ca_distance_angstrom"] > 0).all()
     assert (pairs["minimum_heavy_atom_distance_angstrom"] > 0).all()
-    assert summary["secondary_structure_status"] == "not_computed_in_this_stage"
-    assert summary["residue_depth_status"] == "not_computed_in_this_stage"
+    assert (
+        summary["secondary_structure_status"]
+        == "not_computed_by_structural_descriptor_preparation"
+    )
+    assert (
+        summary["residue_depth_status"]
+        == "not_computed_by_structural_descriptor_preparation"
+    )
 
 
 def test_structural_descriptor_cli_is_self_contained() -> None:

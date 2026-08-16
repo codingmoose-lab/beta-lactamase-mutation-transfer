@@ -492,10 +492,12 @@ def prepare_structural_descriptors(repo_root: Path) -> Mapping[str, object]:
         "pair_distance_scope": "all modeled residue pairs within each selected chain",
         "alternate_location_policy": (
             "Biopython selected atom coordinates; alternate-location status remains "
-            "available in residue_evidence.csv for later sensitivity analysis"
+            "available in residue_evidence.csv for sensitivity analysis"
         ),
-        "secondary_structure_status": "not_computed_in_this_stage",
-        "residue_depth_status": "not_computed_in_this_stage",
+        "secondary_structure_status": (
+            "not_computed_by_structural_descriptor_preparation"
+        ),
+        "residue_depth_status": ("not_computed_by_structural_descriptor_preparation"),
         "nonmetal_ligand_feature_status": (
             "not_used_from_selected references; 5YD7 nonmetal hetero residues are "
             "formate additives rather than an antibiotic/substrate feature"

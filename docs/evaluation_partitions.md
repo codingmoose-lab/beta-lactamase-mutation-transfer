@@ -67,7 +67,7 @@ Leave-one-antibiotic-out evaluation uses the Chen et al. (2020) high-screening c
 
 The evaluated mutation population is restricted to mutations observed under all three conditions.
 
-For each analysis, one antibiotic is reserved for final testing. Model selection uses mutation-grouped folds from the remaining two antibiotics.
+For each analysis, one antibiotic is reserved for testing. Model selection uses mutation-grouped folds from the remaining two antibiotics.
 
 The same mutation may therefore occur under both source and test conditions because this analysis measures transfer across antibiotics rather than prediction of unseen mutations.
 
@@ -94,7 +94,7 @@ All available concentrations for the same mutation group remain in the same oute
 
 Leave-one-concentration-out evaluation tests prediction at a concentration withheld from model fitting.
 
-The held-out concentrations are classified as:
+The test concentrations are classified as:
 
 - edge extrapolation: 4 and 256 µg/mL;
 - interpolation: 8, 16, 32, 64, and 128 µg/mL.

@@ -325,7 +325,7 @@ def _structure_coverage(
     # ``assay_mutation`` can use a different residue number when the assay construct
     # contains an insertion.  VIM-2 has exactly this situation because its assay
     # construct contains the artificial Gly2 insertion.  Join on the publication
-    # mutation plus the explicitly mapped assay position so that numbering systems
+    # mutation plus the mapped assay position so that numbering systems
     # are never mixed.
     mutation_counts = (
         missense.groupby(["protein_id", "mutation", "assay_position"])
@@ -375,7 +375,7 @@ def _structure_coverage(
             "decision_status": "selected_pending_coordinate_checks",
             "basis": (
                 "highest modeled DMS-position coverage among chains A-E; "
-                "coordinate-level checks are evaluated in this step"
+                "coordinate-level checks are evaluated here"
             ),
         },
         "VIM-2": {

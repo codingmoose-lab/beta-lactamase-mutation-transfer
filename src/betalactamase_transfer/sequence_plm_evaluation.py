@@ -316,7 +316,7 @@ def _validate_inputs(
 
     if not np.array_equal(actual_rows, expected_rows):
         raise SequencePLMEvaluationError(
-            "Embedding rows must be the canonical contiguous range 0..N-1"
+            "Embedding rows must form the contiguous range 0..N-1"
         )
 
     proteins = set(embedding_index["protein_id"].astype(str))
@@ -1003,13 +1003,13 @@ def _nested_evaluation(
             }
         )
 
-        final_fit = pd.concat(
+        refit_data = pd.concat(
             [train, validation],
             ignore_index=True,
         )
 
         y_pred = _fit_predict(
-            final_fit,
+            refit_data,
             test,
             mutant_embeddings,
             wild_type_embeddings,
@@ -1049,11 +1049,11 @@ def _source_cv_evaluation(
         scheme_assignments["split_role"].eq("source_model_selection")
     ]
     target_assignments = scheme_assignments[
-        scheme_assignments["split_role"].eq("final_test")
+        scheme_assignments["split_role"].eq("target_test")
     ]
 
     source = frame[frame["scope_role"].eq("source_model_selection")].copy()
-    target = frame[frame["scope_role"].eq("final_test")].copy()
+    target = frame[frame["scope_role"].eq("target_test")].copy()
 
     source["source_cv_fold"] = source["group_id"].map(
         dict(
@@ -1068,7 +1068,7 @@ def _source_cv_evaluation(
         raise SequencePLMEvaluationError(f"Unassigned source CV rows for {scheme_id}")
 
     if set(target["group_id"]) != set(target_assignments["group_id"]):
-        raise SequencePLMEvaluationError(f"Final-test group mismatch for {scheme_id}")
+        raise SequencePLMEvaluationError(f"Target-test group mismatch for {scheme_id}")
 
     folds = []
 
@@ -1094,7 +1094,7 @@ def _source_cv_evaluation(
             {
                 "scheme_id": scheme_id,
                 "task_id": str(scheme["task_id"]),
-                "evaluation_iteration": "final",
+                "evaluation_iteration": "target",
                 "selection_scope": "source_cv",
                 **row,
                 "selected": (
@@ -1108,7 +1108,7 @@ def _source_cv_evaluation(
         {
             "scheme_id": scheme_id,
             "task_id": str(scheme["task_id"]),
-            "evaluation_iteration": "final",
+            "evaluation_iteration": "target",
             "selection_scope": "selected_setting",
             "model_id": MODEL_ID,
             "hidden_state_index": hidden_state_index,
@@ -1133,8 +1133,8 @@ def _source_cv_evaluation(
         target,
         y_pred,
         scheme=scheme,
-        evaluation_iteration="final",
-        evaluation_role="final_test",
+        evaluation_iteration="target",
+        evaluation_role="target_test",
         hidden_state_index=hidden_state_index,
         alpha=alpha,
     )
@@ -1240,7 +1240,7 @@ def prepare_sequence_plm_evaluation(
                 wild_type_embeddings,
             )
 
-        elif family == "source_only_grouped_cv_then_final_test":
+        elif family == "source_only_grouped_cv_then_target_test":
             scheme_predictions, scheme_selection = _source_cv_evaluation(
                 scheme,
                 frame,
@@ -1302,7 +1302,7 @@ def write_sequence_plm_evaluation(
         "test_labels_used_for_model_selection": False,
         "embedding_scaling": (
             "training-data mean and standard deviation within each "
-            "model-selection or final-fit partition"
+            "model-selection or refit partition"
         ),
         "site_delta_definition": (
             "mutant-site ESMC hidden state minus the corresponding "

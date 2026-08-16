@@ -74,7 +74,7 @@ def _load_assay_sequences(repo_root: Path) -> Mapping[str, str]:
     )
     selected = frame.loc[
         frame["source_type"].eq("genbank_assay_construct")
-        & frame["selection_status"].eq("explicit_feature_match")
+        & frame["selection_status"].eq("genbank_assay_construct_feature_match")
     ].copy()
     if len(selected) != 2 or selected["protein_id"].duplicated().any():
         raise SequenceNeighbourhoodEvaluationError(
@@ -488,7 +488,7 @@ def _nested_evaluation(
             raise SequenceNeighbourhoodEvaluationError(
                 f"Incomplete nested split for {scheme_id}/{iteration}"
             )
-        final_fit = pd.concat([train, validation], ignore_index=True)
+        refit_data = pd.concat([train, validation], ignore_index=True)
 
         for model_id in MODEL_IDS:
             radius, alpha, validation_mae, detail = _select_setting(
@@ -529,7 +529,7 @@ def _nested_evaluation(
                 }
             )
             y_pred = _fit_predict(
-                final_fit,
+                refit_data,
                 test,
                 assay_sequences=assay_sequences,
                 radius=radius,
@@ -565,10 +565,10 @@ def _source_cv_evaluation(
         scheme_assignments["split_role"].eq("source_model_selection")
     ]
     target_assignments = scheme_assignments[
-        scheme_assignments["split_role"].eq("final_test")
+        scheme_assignments["split_role"].eq("target_test")
     ]
     source = frame[frame["scope_role"].eq("source_model_selection")].copy()
-    target = frame[frame["scope_role"].eq("final_test")].copy()
+    target = frame[frame["scope_role"].eq("target_test")].copy()
     source["source_cv_fold"] = source["group_id"].map(
         dict(zip(source_assignments["group_id"], source_assignments["cv_fold"]))
     )
@@ -578,7 +578,7 @@ def _source_cv_evaluation(
         )
     if set(target["group_id"]) != set(target_assignments["group_id"]):
         raise SequenceNeighbourhoodEvaluationError(
-            f"Final-test group mismatch for {scheme_id}"
+            f"Target-test group mismatch for {scheme_id}"
         )
 
     folds = []
@@ -604,7 +604,7 @@ def _source_cv_evaluation(
                 {
                     "scheme_id": scheme_id,
                     "task_id": str(scheme["task_id"]),
-                    "evaluation_iteration": "final",
+                    "evaluation_iteration": "target",
                     "selection_scope": "source_cv",
                     **row,
                     "selected": (
@@ -620,7 +620,7 @@ def _source_cv_evaluation(
             {
                 "scheme_id": scheme_id,
                 "task_id": str(scheme["task_id"]),
-                "evaluation_iteration": "final",
+                "evaluation_iteration": "target",
                 "selection_scope": "selected_setting",
                 "model_id": model_id,
                 "radius": "" if radius is None else radius,
@@ -644,8 +644,8 @@ def _source_cv_evaluation(
                 y_pred,
                 scheme=scheme,
                 model_id=model_id,
-                evaluation_iteration="final",
-                evaluation_role="final_test",
+                evaluation_iteration="target",
+                evaluation_role="target_test",
                 radius=radius,
                 alpha=alpha,
                 condition_mode=condition_mode,
@@ -803,7 +803,7 @@ def prepare_sequence_neighbourhood_evaluation(
             scheme_predictions, scheme_selection = _nested_evaluation(
                 scheme, frame, assignments, assay_sequences
             )
-        elif family == "source_only_grouped_cv_then_final_test":
+        elif family == "source_only_grouped_cv_then_target_test":
             scheme_predictions, scheme_selection = _source_cv_evaluation(
                 scheme, frame, assignments, assay_sequences
             )
@@ -838,7 +838,7 @@ def run_sequence_neighbourhood_evaluation(repo_root: Path) -> Mapping[str, objec
         "model_ids": list(MODEL_IDS),
         "primary_sequence_model": SEQUENCE_NEIGHBOURHOOD_MODEL,
         "primary_ablation": MUTATION_CONDITION_MODEL,
-        "assay_sequence_source": "explicit_genbank_assay_construct",
+        "assay_sequence_source": "genbank_assay_construct",
         "neighbourhood_radii": list(NEIGHBOURHOOD_RADII),
         "ridge_alpha_grid": list(RIDGE_ALPHAS),
         "selection_metric": "validation_mae",

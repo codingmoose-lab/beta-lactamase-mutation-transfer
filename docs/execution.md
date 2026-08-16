@@ -14,7 +14,7 @@ python scripts/data/05_prepare_protein_structures.py
 
 The mutation-measurement parser combines condition information encoded in workbook headers with fixed study-level conditions reported in the corresponding publication Methods. In particular, the 2022 VIM-2 concentration experiment and the 2024 NDM-1 DMS were conducted at 37 °C; their spreadsheet score headers encode concentration and/or antibiotic but not temperature. The observation tables therefore record the documented 37 °C assay temperature rather than leaving it missing.
 
-For the 2022 VIM-2 concentration study, the final Nature Ecology & Evolution article is the Methods reference. The retained supplementary workbook remains the measurement source.
+For the 2022 VIM-2 concentration study, the published Nature Ecology & Evolution article is the Methods reference. The retained supplementary workbook remains the measurement source.
 
 ## AlphaFold
 
@@ -37,7 +37,7 @@ M-CSA residue roles are mapped through the selected reference proteins and are n
 
 ## CARD
 
-CARD ontology acquisition imports the selected frozen official ontology archive supplied by the researcher:
+CARD ontology acquisition imports the selected CARD ontology 4.0.1 archive:
 
 ```bash
 python scripts/data/11_acquire_card_ontology.py \
@@ -53,7 +53,7 @@ CARD is used for AMR family, drug-class, and mechanism context. Direct exact-ter
 python scripts/data/13_prepare_residue_evidence.py
 ```
 
-This command prepares one row for every assay residue using the selected PDB chain, UniProt correspondence, AlphaFold mapping/confidence, coordinate-quality fields, and M-CSA reference correspondence. Source meanings remain explicit: M-CSA correspondence is not converted into a direct experimental catalytic label.
+This command prepares one row for every assay residue using the selected PDB chain, UniProt correspondence, AlphaFold mapping/confidence, coordinate-quality fields, and M-CSA reference correspondence. M-CSA correspondence is retained as reference correspondence and is not converted into a direct experimental catalytic label.
 
 The command also prepares the complete publication-derived NDM-1/VIM-2 DMS position correspondence from the Chen et al. (2024) source data. Publication VIM-2 positions are converted through the validated reference-to-assay mapping. The resulting 217 one-to-one pairs comprise 81 shared-WT and 136 differing-WT positions. The separate 132 WT-reversion comparison rows remain outcome-derived supporting evidence and are not used to construct the correspondence.
 
@@ -71,9 +71,9 @@ This command derives residue-level experimental-coordinate descriptors and the c
 python scripts/data/15_prepare_secondary_structure.py
 ```
 
-This command runs `mkdssp` on the deposited 3SPU and 5YD7 coordinate files and maps DSSP assignments to the selected chain-B assay positions. The original DSSP class and a reduced helix/strand/coil class are both retained. Residues without an experimental coordinate remain in the output with an explicit missing-coordinate status.
+This command runs `mkdssp` on the deposited 3SPU and 5YD7 coordinate files and maps DSSP assignments to the selected chain-B assay positions. The original DSSP class and a reduced helix/strand/coil class are both retained. Residues without an experimental coordinate remain in the output with a missing-coordinate status.
 
-The command requires `mkdssp` 4.x and now fails explicitly when the detected executable reports another major version. The accepted local installation used for the study was `mkdssp` 4.6.1, built from DSSP source revision `526448b48e05e30de4912a186faace700050860d`. The Chemical Component Dictionary must be available to libcifpp; a working installation should not emit `Unknown compound:` messages for the selected structures.
+The command requires `mkdssp` 4.x and rejects another detected major version. The validated study installation was `mkdssp` 4.6.1, built from DSSP source revision `526448b48e05e30de4912a186faace700050860d`. The Chemical Component Dictionary must be available to libcifpp; a working installation should not emit `Unknown compound:` messages for the selected structures.
 
 DSSP solvent-accessibility values are not used as a replacement for the Shrake-Rupley/Wilke accessibility descriptors prepared during structural-descriptor preparation. Secondary-structure preparation uses DSSP for secondary-structure assignment only.
 
@@ -83,7 +83,7 @@ DSSP solvent-accessibility values are not used as a replacement for the Shrake-R
 python scripts/data/16_prepare_processed_tables.py
 ```
 
-Processed-table preparation preserves `score_original` unchanged and creates `score_analysis`, which applies only the publication-defined lower DMS fitness floor recorded for each assay. It also creates the checked observation, residue, pair-geometry, reported-comparison, EC50, and assay tables. It also writes `observation_column_roles.csv`. Only fields declared as default mutation or condition inputs are permitted by default; outcomes, grouping identifiers, evaluation-only fields, and provenance/quality fields remain excluded unless a later task definition explicitly justifies a different use. No train/validation/test assignment is created here.
+Processed-table preparation preserves `score_original` unchanged and creates `score_analysis`, which applies only the publication-defined lower DMS fitness floor recorded for each assay. It also creates the checked observation, residue, pair-geometry, reported-comparison, EC50, and assay tables. It also writes `observation_column_roles.csv`. Only fields declared as default mutation or condition inputs are permitted by default; outcomes, grouping identifiers, evaluation-only fields, and provenance/quality fields remain excluded unless a task definition permits a different use. No train/validation/test assignment is created here.
 
 ## Task definitions
 
@@ -93,7 +93,7 @@ python scripts/data/17_define_modelling_tasks.py
 
 task-definition preparation reads the checked processed-table preparation tables and records the exact scientific task scopes and evaluation rules. It does not create train/validation/test assignments. The two headline transfer tasks use the study-defined AMP comparison settings in both directions, with source-protein validation required before the target protein is evaluated.
 
-The task definitions distinguish unseen-position, unseen-mutation, antibiotic-transfer, temperature-transfer, and concentration-transfer claims. They also define held-out aligned shared-WT reporting using the complete 217-position correspondence while keeping source-only cross-protein model selection unchanged. The 132 Chen 2024 WT-reversion rows remain separate supporting evidence. See `docs/task_definitions.md`.
+The task definitions distinguish unseen-position, unseen-mutation, antibiotic-transfer, temperature-transfer, and concentration-transfer claims. They also define aligned shared-WT reporting using the complete 217-position correspondence while keeping cross-protein model selection restricted to the source protein. The 132 Chen 2024 WT-reversion rows remain separate supporting evidence. See `docs/task_definitions.md`.
 
 ## Evaluation partitions
 
@@ -101,7 +101,7 @@ The task definitions distinguish unseen-position, unseen-mutation, antibiotic-tr
 python scripts/data/18_define_evaluation_partitions.py
 ```
 
-evaluation-partition preparation converts the frozen task definitions into deterministic group-level partitions. Within-protein evaluation is grouped by residue position; unseen-mutation concentration evaluation is grouped by exact mutation; cross-protein and condition-transfer model selection uses source data only before one final held-out evaluation. Assignment never uses mutation-effect scores. See `docs/evaluation_partitions.md`.
+Evaluation-partition preparation converts the task definitions into group-level partitions. Within-protein evaluation is grouped by residue position; unseen-mutation concentration evaluation is grouped by exact mutation; cross-protein and condition-transfer model selection uses source data only, followed by one test on the target population. Assignment never uses mutation-effect scores. See `docs/evaluation_partitions.md`.
 
 No modelling feature matrix is created by this command.
 
@@ -111,12 +111,12 @@ No modelling feature matrix is created by this command.
 python scripts/data/19_prepare_modelling_views.py
 ```
 
-modelling-view preparation joins the frozen task/scheme definitions to the exact observation IDs
-that belong to each evaluation scope and records which observation, residue, and
-pair-geometry fields may be used by later models. The prediction target is not
+Modelling-view preparation joins the task and scheme definitions to the exact observation IDs
+that belong to each evaluation scope and records the observation, residue, and
+pair-geometry fields available to predictive models. The prediction target is not
 written into the scheme-membership table. M-CSA/mechanistic reference fields and
-the Chen-2024 reported-pair fields are reserved from the primary predictor set
-so later biological validation remains independent. Representation comparisons
+the Chen-2024 reported-pair fields are excluded from the primary predictor set
+and retained for biological validation. Representation comparisons
 use matched eligible rows. See `docs/modelling_views.md`.
 
 No embeddings, graph tensors, structural images, or trained models are created
@@ -143,9 +143,9 @@ After the preparation, task, partition, and modelling-view checks are closed, ru
 python scripts/data/20_run_baseline_evaluation.py
 ```
 
-This command evaluates deterministic simple baselines under the frozen evaluation schemes, selects ridge regularisation only from permitted validation/source rows, and prepares the direct 1,513-pair homologue transfer analysis. It does not create sequence embeddings, residue graphs, structural images, or neural models.
+This command evaluates simple baselines under the specified evaluation schemes, selects ridge regularisation only from permitted validation/source rows, and prepares the direct 1,513-pair homologue transfer analysis. It does not create sequence embeddings, residue graphs, structural images, or neural models.
 
-After those predictions are frozen, calculate grouped-bootstrap uncertainty with:
+After the baseline predictions are written, calculate grouped-bootstrap uncertainty with:
 
 ```bash
 python scripts/data/21_calculate_baseline_uncertainty.py
@@ -153,7 +153,7 @@ python scripts/data/21_calculate_baseline_uncertainty.py
 
 ## Matched homologue baseline analysis
 
-After baseline predictions and grouped uncertainty are frozen, run:
+After baseline predictions and grouped uncertainty are available, run:
 
 ```bash
 python scripts/data/22_analyze_homologue_baseline_transfer.py
@@ -161,7 +161,7 @@ python scripts/data/22_analyze_homologue_baseline_transfer.py
 
 This command performs the outcome-independent 1,513-pair shared-wild-type homologue
 analysis, floor sensitivity checks, the 478-pair neither-at-floor analysis, and the
-306 discordant-floor analysis. It is post-hoc analysis of frozen baseline predictions;
+306 discordant-floor analysis. It is post-hoc analysis of saved baseline predictions;
 it does not refit predictive models.
 
 ## Sequence-neighbourhood evaluation
@@ -173,11 +173,11 @@ python scripts/data/23_evaluate_sequence_neighbourhood.py
 ```
 
 Here, `neighbourhood` means the biological amino-acid neighbourhood around the mutated
-residue. The command reuses the frozen evaluation partitions and compares the same
-mutation/condition model with and without explicit neighbouring amino-acid states.
+residue. The command reuses the specified evaluation partitions and compares the same
+mutation/condition model with and without neighbouring amino-acid states.
 
 The VIM-2 2022 unseen-mutation experiment must not be described as unseen-position
-generalisation. In the frozen folds, every held-out mutation occurs at a residue
+generalisation. In these grouped folds, every test mutation occurs at a residue
 position represented in fitting. At radius 16, all 267 VIM-2 assay positions have
 unique sequence-neighbourhood signatures, and every test signature is already present
 in the corresponding fitting population. Consequently, the strong VIM-2 2022 result
@@ -185,10 +185,10 @@ shows that raw sequence identity is useful for unseen mutations at familiar posi
 it does not demonstrate generalisation to completely unseen positions.
 
 The selected radius reaches the upper radius boundary in several settings, including
-all five VIM-2 2022 folds. Because final evaluation results have now been inspected,
-the Step-23 radius grid is frozen and must not be expanded merely to improve reported
-performance. Any broader-context sequence experiment belongs to a separately specified
-model family with model selection restricted to permitted training/validation rows.
+all five VIM-2 2022 folds. The reported analysis retains the tested radii 4, 8, 12,
+and 16 because test results have already been inspected. A broader-context sequence
+experiment requires a separately specified model with selection restricted to
+training and validation rows.
 
 
 ## Protein-language-model embeddings
@@ -215,7 +215,7 @@ protein language model. Generated embeddings and provenance are written under
 `data/interim/sequence_plm_embeddings/`. Model weights remain in the machine
 model cache and are not added to the research repository.
 
-The successful production environment used Python 3.11.15, PyTorch runtime
+The ESMC extraction environment used Python 3.11.15, PyTorch runtime
 `2.13.0+cu130`, CUDA 13.0, Transformers 4.57.6, and an NVIDIA GeForce RTX
 4060 Ti. `requirements-plm.txt` records package versions known from the verified
 environment. No unverified historical PyTorch installation URL is asserted.
@@ -228,26 +228,99 @@ After validating the extracted arrays and their provenance, run:
 
 The ESMC model uses the mutation-site hidden-state difference relative to the
 corresponding wild-type residue, together with ordered substitution identity and
-the task-appropriate condition information. Hidden-state index and ESMC ridge
-regularisation are selected jointly from the predeclared candidate sets using
-only the validation population permitted by each frozen evaluation scheme.
-Final held-out labels are not used for model selection.
+the task-appropriate condition information. The hidden-state index and ESMC ridge
+regularisation are selected as a pair from candidate sets defined before evaluation,
+using only the validation population permitted by each evaluation scheme. Test labels
+are not used for model selection.
 
 See `docs/sequence_plm_evaluation.md`.
 
-## Two-workstation compute policy
+## Sequence model comparison
 
-The macOS workstation is the canonical working copy for the research repository
-and the final validated analysis products. The WSL/CUDA workstation is used for
-computations that genuinely require the NVIDIA GPU.
+After the mutation/condition, sequence-neighbourhood, and ESMC predictions are
+available, run:
 
-Repository-controlled source code, tests, and documentation are synchronized
-through Git. The ignored `data/raw/`, `data/interim/`, and `data/processed/`
-trees are not synchronized through Git. Required scientific inputs and generated
-GPU products are transferred explicitly between workstations and verified by
-checksum when identity matters.
+```bash
+python scripts/data/26_compare_sequence_models.py
+```
 
-A code synchronization alone does not require regeneration of an existing
-scientific product. A computation is repeated only when a change affects its
-inputs, model definition, evaluation design, or another assumption on which the
-product depends.
+The command compares the three models on identical test observations and calculates
+paired bootstrap intervals using `evaluation_group_id` as the resampling unit. It does
+not refit models or use test labels for model selection.
+
+See `docs/sequence_model_comparison.md`.
+
+## Experimental-structure descriptor evaluation
+
+After the sequence-model comparison is available, run:
+
+```bash
+python scripts/data/27_evaluate_experimental_structure.py
+```
+
+This command restricts fitting and evaluation to observations marked
+`experimental_structure_task_eligible` and compares a structure-matched
+mutation/condition ridge model with a ridge model that adds generic experimental
+structure descriptors. Catalytic-zinc distances, M-CSA correspondence,
+reported-homologue fields, raw coordinates, protein identity, and assay position are
+not direct predictive inputs. They remain available for independent biological
+interpretation.
+
+See `docs/experimental_structure_evaluation.md`.
+
+## Structure-matched model comparison
+
+After Script 27 has produced the verified matched structural predictions, run:
+
+```bash
+python scripts/data/28_compare_structure_matched_models.py
+```
+
+This command compares mutation/condition, sequence-neighbourhood, ESMC, and
+experimental-structure descriptor models on the same experimental-structure-eligible
+fitting and test populations. Script 27 predictions are reused for the two models it
+already evaluated; the sequence-neighbourhood and ESMC models are reselected and
+refitted on the same matched training populations. All six model contrasts use paired
+`evaluation_group_id` bootstrap resampling. Target-test labels remain outside model
+selection.
+
+This command is not the structural-image, residue-graph, or multimodal-fusion analysis.
+
+See `docs/structure_matched_model_comparison.md`.
+
+## Biological error analysis
+
+After the structure-matched model comparison is available, run:
+
+```bash
+python scripts/data/29_analyze_biological_errors.py
+```
+
+This command analyzes the verified Script 28 prediction errors against catalytic-Zn
+distance, M-CSA correspondence, and outcome-independent homologue correspondence.
+SASA, residue-neighbour counts, contact counts, and secondary structure are reported
+separately because they were inputs to the experimental-structure model. Prediction
+errors retain the evaluation groups used by each scheme, while biological associations
+are summarized and resampled by residue position so repeated mutations at one residue
+do not count as independent structural observations. No prediction model is fitted or
+selected in this analysis.
+
+See `docs/biological_error_analysis.md`.
+
+## Experimental-structure residue-graph preparation
+
+After the structure-matched analyses and biological error analysis have been
+checked, prepare the outcome-blind experimental-structure residue graphs with:
+
+```bash
+python scripts/data/30_prepare_residue_graphs.py
+```
+
+The command builds one undirected graph for each selected experimental
+structure using the audited C-alpha distance threshold of 8 Å. It does not fit
+a graph model or perform model selection. Biological-reference fields,
+mutation-effect values, predictions, and evaluation assignments do not enter
+graph construction. Core evaluation membership is used only to verify graph
+coverage after topology has been created.
+
+See `docs/residue_graphs.md`.
