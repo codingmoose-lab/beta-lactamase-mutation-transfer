@@ -746,7 +746,7 @@ def prepare_residue_graphs(repo_root: Path) -> Mapping[str, object]:
             f"{PRIMARY_CA_DISTANCE_CUTOFF_ANGSTROM:g} angstrom"
         ),
         "primary_ca_distance_cutoff_angstrom": PRIMARY_CA_DISTANCE_CUTOFF_ANGSTROM,
-        "edge_directionality": "undirected_canonical_single_row",
+        "edge_directionality": "undirected_single_row",
         "self_loops_in_edge_table": False,
         "peptide_edges_added_separately": False,
         "peptide_adjacency_retained_as_edge_metadata": True,

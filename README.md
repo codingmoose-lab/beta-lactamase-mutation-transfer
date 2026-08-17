@@ -56,10 +56,10 @@ The current programs produce linked tables under:
 - `data/interim/secondary_structure/`: retained DSSP assignments for selected experimental chains;
 - `data/processed/`: checked research tables plus declared observation-column roles for later modelling;
 - `data/interim/task_definitions/`: task scopes and evaluation rules;
-- `data/interim/evaluation_partitions/`: leakage-controlled group assignments and partition audits;
+- `data/interim/evaluation_partitions/`: grouped evaluation assignments and partition audits;
 - `data/interim/modelling_views/`: modelling-view observation membership, input contracts, and matched modality-eligible populations;
 - `data/interim/baseline_evaluation/`: baseline predictions, grouped uncertainty, and matched homologue analyses;
-- `data/interim/sequence_neighbourhood_evaluation/`: mutation/condition and amino-acid-neighbourhood comparisons on the frozen core schemes;
+- `data/interim/sequence_neighbourhood_evaluation/`: mutation/condition and amino-acid-neighbourhood comparisons on the predefined core schemes;
 - `data/interim/sequence_plm_embeddings/`: outcome-blind ESMC mutation-site and wild-type residue embeddings plus extraction provenance;
 - `data/interim/sequence_plm_evaluation/`: ESMC site-delta predictions, metrics, and model-selection records.
 
@@ -81,7 +81,7 @@ The current programs produce linked tables under:
 - Residue-level M-CSA fields describe correspondence to curated M-CSA reference residues; they are not relabelled as direct experimental catalytic annotations of NDM-1 or VIM-2.
 - The complete Chen et al. (2024) aligned-position source yields 217 one-to-one NDM-1/VIM-2 position pairs after validated assay/reference mapping: 81 shared-WT and 136 differing-WT positions. The separate 132 WT-reversion comparison rows remain outcome-derived supporting evidence and are not used as the alignment.
 - Sequence-to-PDB correspondence is accepted only where all equally scoring optimal alignments agree. The known NDM-1/3SPU tie is confined to unmodelled PDB entity position 1; no coordinate-bearing residue is resolved by arbitrary alignment order.
-- Processed observation columns have declared roles so outcomes, grouping fields, evaluation metadata, and provenance cannot silently become default predictive inputs.
+- Processed observation columns have declared roles so outcomes, grouping fields, evaluation metadata, and provenance cannot silently become default model inputs.
 - Task-definition preparation freezes task meaning before partitions are generated: cross-protein model selection uses source-protein validation only, VIM-2 concentration and condition transfer remain distinct from unseen-mutation generalisation, and direct paired equivalent-mutation reporting uses only the 81 shared-WT aligned positions without consulting mutation-effect values.
 - Evaluation-partition preparation assigns residue-position or mutation groups according to the scientific claim. Group assignment does not use mutation-effect scores and keeps held-out labels unavailable during model selection.
 - Modelling-view preparation fixes modelling input roles and exact scheme membership before feature generation. Biological reference fields reserved for later validation do not become default predictors, and modality comparisons use matched eligible rows.
