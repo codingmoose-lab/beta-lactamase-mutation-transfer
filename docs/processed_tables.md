@@ -72,7 +72,7 @@ Antibiotic, concentration, and temperature are condition inputs.
 
 Protein identity and assay position are retained for representation selection, transfer analyses, and grouped evaluation rather than used as default scalar predictors.
 
-Outcome, evaluation, grouping, and provenance fields are not included automatically as predictive inputs.
+Outcome, evaluation, grouping, and source-record fields are not included automatically as model inputs.
 
 ## Dataset splitting
 

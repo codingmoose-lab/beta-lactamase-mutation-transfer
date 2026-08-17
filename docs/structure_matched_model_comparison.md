@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This analysis compares four models on the same observations with eligible experimental-structure descriptors and under the same evaluation partitions. The comparison asks how predictive performance differs among mutation/condition, local sequence, ESMC, and experimental-structure inputs when model fitting and test evaluation use the same eligible population.
+This analysis compares four models on the same observations with eligible experimental-structure descriptors and under the same evaluation partitions. The comparison asks how model performance differs among mutation/condition, local sequence, ESMC, and experimental-structure inputs when model fitting and test evaluation use the same eligible population.
 
 The compared models are:
 
