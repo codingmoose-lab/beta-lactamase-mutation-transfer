@@ -12,4 +12,4 @@ The study-level temperature rules currently retained are:
 
 NDM-1 and VIM-2 are compared directly for ampicillin at study-defined concentrations chosen to provide similar selection pressure: 256 µg/mL for NDM-1 and 128 µg/mL for VIM-2 at 37 °C. Cefotaxime and meropenem measurements remain condition-specific and are not treated as directly comparable between proteins solely because the antibiotic name matches.
 
-The 2024 cross-protein comparison table is treated as a derived comparison table and is not counted as an additional set of DMS measurements.
+The 2024 cross-protein comparison table is treated as a non-independent comparison table and is not counted as an additional set of DMS measurements.

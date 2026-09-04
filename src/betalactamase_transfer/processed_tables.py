@@ -791,7 +791,7 @@ def prepare_processed_tables(repo_root: Path) -> Mapping[str, object]:
         ),
         "homologue_pair_policy": (
             "the 132 Chen 2024 WT-reversion comparison rows remain a separate "
-            "outcome-derived resource; the complete 217-position correspondence "
+            "outcome-based resource; the complete 217-position correspondence "
             "is prepared independently from publication position mapping"
         ),
         "outputs": [

@@ -13,7 +13,7 @@ def test_define_assays_and_conditions() -> None:
     assert summary["validated_measurement_count"] == 138518
     assert summary["cross_protein_link_count"] == 132
 
-    links = pd.read_csv(output / "derived_value_relationships.csv")
+    links = pd.read_csv(output / "comparison_value_relationships.csv")
     assert len(links) == 132
     assert links["vim_observation_id"].notna().all()
     assert links["ndm_observation_id"].notna().all()

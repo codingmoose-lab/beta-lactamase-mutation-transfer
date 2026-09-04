@@ -620,7 +620,7 @@ def _parse_ec50(root: Path, sequences: Mapping[str, str]) -> List[Mapping[str, o
         )
     relative_2022 = "data/raw/vim2_2022/chen_2022_supplementary_data_vim2_concentration_landscape.xlsx"
     for sheet_name, header_row, measurement_type in (
-        ("SD2 EC50", 6, "library_derived_ec50"),
+        ("SD2 EC50", 6, "library_ec50"),
         ("SD3 Single variant EC50", 3, "individual_ec50"),
     ):
         sheet = _sheet(root / relative_2022, sheet_name)

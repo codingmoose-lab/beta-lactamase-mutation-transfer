@@ -260,16 +260,16 @@ def _link_cross_homologue(
         rows.append(
             {
                 "comparison_id": pair["comparison_id"],
-                "derived_record_type": "cross_homologue_comparison",
+                "comparison_record_type": "cross_homologue_comparison",
                 "vim_relationship": (
                     "exact_copy"
                     if abs(vim_difference) <= 1e-9
-                    else "derived_or_transformed_value"
+                    else "reported_value_differs_from_linked_observation"
                 ),
                 "ndm_relationship": (
                     "exact_copy"
                     if abs(ndm_difference) <= 1e-9
-                    else "derived_or_transformed_value"
+                    else "reported_value_differs_from_linked_observation"
                 ),
                 "independence_status": "not_independent_comparison_record",
                 "vim_observation_id": vim_record["observation_id"],
@@ -308,7 +308,7 @@ def define_assays_and_conditions(repo_root: Path) -> Mapping[str, object]:
     _write_csv(output_dir / "condition_score_statistics.csv", condition_rows)
     _write_csv(output_dir / "measurement_groups.csv", assignments)
     _write_csv(output_dir / "cross_protein_conditions.csv", candidates)
-    _write_csv(output_dir / "derived_value_relationships.csv", links)
+    _write_csv(output_dir / "comparison_value_relationships.csv", links)
 
     summary = {
         "status": "PASS",
@@ -325,7 +325,7 @@ def define_assays_and_conditions(repo_root: Path) -> Mapping[str, object]:
             "condition_score_statistics.csv",
             "measurement_groups.csv",
             "cross_protein_conditions.csv",
-            "derived_value_relationships.csv",
+            "comparison_value_relationships.csv",
         ],
     }
     output_dir.mkdir(parents=True, exist_ok=True)

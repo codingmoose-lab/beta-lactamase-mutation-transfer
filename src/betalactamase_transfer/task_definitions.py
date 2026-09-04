@@ -842,7 +842,7 @@ def prepare_task_definitions(repo_root: Path) -> dict[str, Any]:
         ),
         "aligned_shared_wild_type_mutation_pair_count": int(len(aligned_pair_rows)),
         "reported_pair_policy": (
-            "the 132 Chen 2024 WT-reversion rows remain outcome-derived supporting "
+            "the 132 Chen 2024 WT-reversion rows remain outcome-based supporting "
             "evidence and are never used to define model-selection populations"
         ),
         "random_row_split_policy": (
