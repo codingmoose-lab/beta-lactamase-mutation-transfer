@@ -11,6 +11,11 @@ from betalactamase_transfer.source_tables import describe_source_tables
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture
+def repo_root() -> Path:
+    return REPO_ROOT
+
+
 @pytest.fixture(scope="session", autouse=True)
 def prepared_data() -> None:
     """Generate intermediate tables once for integration tests."""

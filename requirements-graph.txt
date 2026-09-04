@@ -1,0 +1,11 @@
+-r requirements-dev.txt
+
+# PyTorch is installed separately with the CUDA wheel appropriate to the compute host.
+# Verified RTX environment on 2026-08-17:
+# Python 3.11.15
+# torch 2.12.1+cu130
+# CUDA build 13.0
+# NVIDIA GeForce RTX 4060 Ti
+
+torch-geometric==2.7.0
+tqdm>=4.67,<5
