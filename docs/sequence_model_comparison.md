@@ -40,7 +40,7 @@ Within each scheme, an `evaluation_group_id` must occur in only one test
 iteration. This allows pooled out-of-fold predictions to be compared while
 retaining the evaluation group as the bootstrap resampling unit.
 
-Input-file SHA-256 digests are written to the summary for provenance. They are
+Input-file SHA-256 digests are written to the summary to record exact input identity. They are
 not used as hard-coded acceptance criteria; validity is checked from model
 identity, row matching, evaluation roles, group membership, and finite values.
 

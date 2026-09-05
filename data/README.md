@@ -12,7 +12,7 @@ Local data are organized as follows:
 - `processed/`: checked research tables used by the frozen task definitions and modelling views.
 
 Source accessions, download locations, file checksums, inclusion decisions,
-and generation commands are recorded in the repository documentation and generated provenance outputs.
+and generation commands are recorded in the repository documentation and generated source records.
 
 Run the programs in `scripts/data/` in numerical order when intentionally rebuilding
 outputs from locally acquired source files. Acquisition steps should not be rerun merely

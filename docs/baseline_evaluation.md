@@ -2,7 +2,7 @@
 
 Baseline evaluation is the first model-based analysis after biological preparation, task definition, evaluation partitioning, and modelling-input contracts have been defined. Its purpose is to establish how much mutation-effect prediction and transfer can be explained without protein-language models, residue graphs, structure-based inputs, or mechanistic-reference information.
 
-The primary target is `score_analysis`. `score_original` remains an unchanged source measurement and is never a predictor. `score_uncertainty`, protein identity, assay position, provenance fields, structural availability flags, M-CSA information, catalytic-reference fields, and Chen-2024 reported compatibility information are not direct baseline predictors.
+The primary target is `score_analysis`. `score_original` remains an unchanged source measurement and is never a predictor. `score_uncertainty`, protein identity, assay position, source-record fields, structural availability flags, M-CSA information, catalytic-reference fields, and Chen-2024 reported compatibility information are not direct baseline predictors.
 
 The baseline predictors are the training-set mean, mutant-residue mean, WT-to-mutant substitution mean, and ridge regression on WT and mutant amino-acid identity. Chen-2022 concentration-response schemes additionally use a ridge model with quantitative `log2(concentration)`. The concentration transform is estimated from fitting rows only. Hand-selected physicochemical amino-acid scales are not included in these baselines, avoiding additional externally defined amino-acid descriptors.
 

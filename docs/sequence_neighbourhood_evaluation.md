@@ -17,9 +17,9 @@ All neighbourhoods come from the experimentally verified assay constructs:
 `NDM1_2024_assay_construct` and `VIM2_2020_assay_construct`. Observation wild-type
 residues are checked against those sequences before fitting.
 
-The analysis is limited to five core schemes: NDM-1 unseen-position generalisation,
-VIM-2 Chen-2020 unseen-position generalisation, both headline cross-protein directions,
-and VIM-2 Chen-2022 unseen-mutation concentration-response generalisation. Existing
+The analysis is limited to five core schemes: NDM-1 performance on unseen positions,
+VIM-2 Chen-2020 performance on unseen positions, both headline cross-protein directions,
+and VIM-2 Chen-2022 performance on unseen mutations in the concentration-response data. Existing
 partition assignments are reused without modification.
 
 Within-protein position tasks use categorical assay-condition terms. The VIM-2

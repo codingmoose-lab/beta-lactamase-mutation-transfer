@@ -3,7 +3,7 @@
 ## Purpose
 
 This analysis tests whether generic descriptors from the selected experimental
-PDB structures improve mutation-effect prediction beyond mutation and assay
+PDB structures improve mutation-effect prediction relative to mutation and assay
 condition information on the same structure-eligible observations.
 
 The five core evaluation schemes and their existing partition assignments are

@@ -8,7 +8,7 @@ structures into protein residue graphs without fitting a prediction model.
 The graph is constructed from the same experimentally supported structural
 population used for the structure-matched analyses. Graph preparation is
 separate from subsequent graph-model design so that topology, structural
-provenance, and evaluation coverage can be audited before any graph model is
+source identity, and evaluation coverage can be audited before any graph model is
 selected or trained.
 
 ## Structural source

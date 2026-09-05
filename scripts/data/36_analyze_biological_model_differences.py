@@ -11,7 +11,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from betalactamase_transfer import (  # noqa: E402
-    biological_model_difference_analysis as stage36,
+    biological_model_difference_analysis as model_difference_analysis,
 )
 
 
@@ -27,17 +27,21 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.check_only:
-        summary = stage36.inspect_biological_model_difference_inputs(args.repo_root)
+        summary = model_difference_analysis.inspect_biological_model_difference_inputs(
+            args.repo_root
+        )
         print("BIOLOGICAL MODEL-DIFFERENCE INPUT REVIEW PASSED")
         print(json.dumps(summary, indent=2))
         return
 
     print(
-        "Running Stage 36 CPU analysis: matched error differences and grouped "
-        "bootstrap intervals; no predictive model is being fitted.",
+        "Running biological model-difference analysis: matched error differences and "
+        "grouped bootstrap intervals; no prediction model is being fitted.",
         flush=True,
     )
-    summary = stage36.run_biological_model_difference_analysis(args.repo_root)
+    summary = model_difference_analysis.run_biological_model_difference_analysis(
+        args.repo_root
+    )
     print("BIOLOGICAL MODEL-DIFFERENCE ANALYSIS PASSED")
     print(json.dumps(summary, indent=2))
 

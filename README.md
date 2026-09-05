@@ -1,6 +1,6 @@
 # Beta-lactamase mutation transfer
 
-Computational study of mutation effects across NDM-1 and VIM-2 under antibiotic, concentration, and temperature conditions. The repository prepares published deep-mutational-scanning measurements, maps residue numbering between assay and reference sources, prepares experimental and AlphaFold structures, and records catalytic and AMR annotations for sequence- and structure-informed mutation-effect analyses.
+Computational study of mutation effects across NDM-1 and VIM-2 under antibiotic, concentration, and temperature conditions. The repository prepares published deep-mutational-scanning measurements, maps residue numbering between assay and reference sources, prepares experimental and AlphaFold structures, and records catalytic and AMR annotations for mutation-effect analyses that use sequence and structural information.
 
 ## Reproducible research workflow
 
@@ -42,14 +42,15 @@ python scripts/data/31_evaluate_residue_neighbourhood.py
 python scripts/data/32_evaluate_residue_graph_neural.py
 python scripts/data/33_evaluate_residue_geometry_neural.py
 python scripts/data/34_evaluate_sequence_residue_graph.py
-python scripts/data/35_analyze_sequence_structure_complementarity.py --check-only
-python scripts/data/36_analyze_biological_model_differences.py --check-only
-python scripts/data/37_analyze_training_seed_stability.py --check-only
-python scripts/data/38_analyze_sequence_model_sensitivity.py --check-only
-python scripts/data/39_evaluate_condition_transfer.py --check-only
-python scripts/data/40_evaluate_concentration_transfer.py --check-only
-python scripts/data/41_analyze_condition_concentration_biology.py --check-only
-python scripts/data/42_analyze_matched_homologue_models.py --check-only
+python scripts/data/35_analyze_sequence_structure_complementarity.py
+python scripts/data/36_analyze_biological_model_differences.py
+python scripts/data/37_analyze_training_seed_stability.py --postprocess-only --device cpu
+python scripts/data/38_analyze_sequence_model_sensitivity.py
+python scripts/data/39_evaluate_condition_transfer.py
+python scripts/data/40_evaluate_concentration_transfer.py
+python scripts/data/41_analyze_condition_concentration_biology.py
+python scripts/data/42_analyze_matched_homologue_models.py
+python scripts/data/43_evaluate_atomic_local_voxel.py --postprocess-only --device cpu
 ```
 
 Acquisition commands that contact external services or import a separately downloaded archive should only be rerun when the corresponding source is intentionally being refreshed. Existing local raw sources are otherwise left unchanged.
@@ -77,15 +78,19 @@ The current programs produce linked tables under:
 - `data/interim/modelling_views/`: modelling-view observation membership, input contracts, and matched modality-eligible populations;
 - `data/interim/baseline_evaluation/`: baseline predictions, grouped uncertainty, and matched homologue analyses;
 - `data/interim/sequence_neighbourhood_evaluation/`: mutation/condition and amino-acid-neighbourhood comparisons on the predefined core schemes;
-- `data/interim/sequence_plm_embeddings/`: outcome-blind ESMC mutation-site and wild-type residue embeddings plus extraction provenance;
+- `data/interim/sequence_plm_embeddings/`: ESMC mutation-site and wild-type residue embeddings constructed without mutation-effect outcomes, plus extraction records;
 - `data/interim/sequence_plm_evaluation/`: ESMC site-delta predictions, metrics, and model-selection records.
-- `data/interim/sequence_structure_complementarity/`: validation-selected sequence/graph combinations, matched final comparisons, and predictive-complementarity diagnostics.
+- `data/interim/residue_graph_neural_evaluation/`: centre-residue and residue-graph neural predictions, repeated fits, metrics, and paired comparisons.
+- `data/interim/residue_geometry_neural_evaluation/`: residue-geometry neural predictions, repeated fits, metrics, and paired comparisons.
+- `data/interim/sequence_residue_graph_neural_evaluation/`: sequence-plus-residue-graph predictions, repeated fits, metrics, and paired comparisons.
+- `data/interim/sequence_structure_complementarity/`: validation-selected sequence/graph combinations, matched final comparisons, and prediction-complementarity diagnostics.
 - `data/interim/training_seed_stability/`: fixed-setting training-seed metrics and model-comparison stability records.
 - `data/interim/biological_model_difference_analysis/`: position-level structural associations, condition-stratified error differences, homologue-pair comparisons, and task concordance for the evaluated model families.
 - `data/interim/condition_transfer_evaluation/`: held-out-antibiotic and temperature-transfer predictions, source-only model-choice records, paired comparisons, and condition-shift summaries.
 - `data/interim/concentration_response_evaluation/`: held-out-concentration predictions, model-choice records, paired comparisons, and interpolation/extrapolation summaries.
 - `data/interim/condition_concentration_biological_analysis/`: condition and concentration transfer summaries at mutation and position levels.
 - `data/interim/matched_homologue_model_analysis/`: matched NDM-1/VIM-2 model predictions, grouped comparisons, background-difference associations, and position summaries.
+- `data/interim/atomic_local_voxel_evaluation/`: atom-level local-structure predictions, repeated fits, metrics, paired comparisons, and training records.
 
 ## Scientific conventions
 
@@ -105,7 +110,7 @@ The current programs produce linked tables under:
 - Residue-level M-CSA fields describe correspondence to curated M-CSA reference residues; they are not relabelled as direct experimental catalytic annotations of NDM-1 or VIM-2.
 - The complete Chen et al. (2024) aligned-position source yields 217 one-to-one NDM-1/VIM-2 position pairs after validated assay/reference mapping: 81 shared-WT and 136 differing-WT positions. The separate 132 WT-reversion comparison rows remain outcome-based supporting evidence and are not used as the alignment.
 - Sequence-to-PDB correspondence is accepted only where all equally scoring optimal alignments agree. The known NDM-1/3SPU tie is confined to unmodelled PDB entity position 1; no coordinate-bearing residue is resolved by arbitrary alignment order.
-- Processed observation columns have declared roles so outcomes, grouping fields, evaluation metadata, and provenance cannot silently become default model inputs.
+- Processed observation columns have declared roles so outcomes, grouping fields, evaluation metadata, and source-record fields cannot silently become default model inputs.
 - Task-definition preparation sets task meaning before partitions are generated: cross-protein model selection uses source-protein validation only, VIM-2 concentration and condition transfer remain distinct from unseen-mutation prediction, and direct paired equivalent-mutation reporting uses only the 81 shared-WT aligned positions without consulting mutation-effect values.
 - Evaluation-partition preparation assigns residue-position or mutation groups according to the scientific claim. Group assignment does not use mutation-effect scores and keeps held-out labels unavailable during model selection.
 - Modelling-view preparation fixes modelling input roles and exact scheme membership before feature generation. Biological reference fields reserved for later validation do not become default predictors, and modality comparisons use matched eligible rows.

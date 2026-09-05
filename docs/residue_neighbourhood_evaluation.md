@@ -2,7 +2,7 @@
 
 ## Scientific question
 
-This analysis tests whether the experimentally resolved residues directly surrounding a mutated site contain mutation-effect information beyond descriptors of the mutated residue itself.
+This analysis tests whether the experimentally resolved residues directly surrounding a mutated site contain mutation-effect information in addition to descriptors of the mutated residue itself.
 
 The analysis uses the residue graph prepared from the selected experimental structures. Direct neighbours are residues connected to the mutated residue by the reviewed C-alpha distance threshold of 8 angstrom. The graph definition is not changed during this analysis.
 

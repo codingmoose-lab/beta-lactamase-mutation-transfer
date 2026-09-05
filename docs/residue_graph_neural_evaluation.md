@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Script 32 tests whether graph communication among experimentally observed residue environments improves mutation-effect modelling beyond a matched neural model that uses only the mutated residue. The comparison is designed to separate information gained from neighbouring residues from gains attributable to nonlinear neural modelling alone.
+Script 32 tests whether graph communication among experimentally observed residue environments improves mutation-effect modelling relative to a matched neural model that uses only the mutated residue. The comparison is designed to separate information gained from neighbouring residues from gains attributable to nonlinear neural modelling alone.
 
 The analysis uses the five core evaluation schemes already used by the sequence and experimental-structure analyses. Existing test populations are reused without changing their membership.
 

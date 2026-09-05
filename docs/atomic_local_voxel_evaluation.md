@@ -10,7 +10,7 @@ The model is a deliberately small 3-D CNN. Architecture hyperparameters are fixe
 
 Primary comparisons are paired against the centre-residue neural model, residue graph model, E(n)-equivariant residue geometry model, and experimental-structure descriptor ridge model. Paired uncertainty uses grouped bootstrap resampling by `evaluation_group_id`.
 
-A positive result would indicate that atom-level local organization contains useful mutation-effect information beyond the residue-level encodings tested here. A null or negative result would indicate that increasing structural resolution to atom-level WT coordinates does not improve these mutation-effect tasks under the present data and evaluation design. Neither outcome is interpreted as observing mutation-induced structural relaxation, because no mutant structures are used.
+A positive result would indicate that atom-level local organization contains useful mutation-effect information in addition to the residue-level encodings tested here. A null or negative result would indicate that increasing structural resolution to atom-level WT coordinates does not improve these mutation-effect tasks under the present data and evaluation design. Neither outcome is interpreted as observing mutation-induced structural relaxation, because no mutant structures are used.
 ## CUDA maximum reduction
 
 The CNN retains non-overlapping 2 x 2 x 2 maximum reduction. Native CUDA

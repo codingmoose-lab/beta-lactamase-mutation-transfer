@@ -109,10 +109,10 @@ RESULT_GUARDS = {
         "sequence_residue_graph_predictions.csv"
     ): "6d6ddae3f9654b8dd0a79dd750ede8755b2ac35bb3f8454d0e4d3457796fed80",
     "data/processed/missense_observations.csv": (
-        "3bf056663376ab1db8f6bc95c0a491c079c59ef95c70167a627256f390cf24e0"
+        "2a311f5431a6111726c4c850d3e541cc271bfc55a6faa5cbbd36c5591a5e785c"
     ),
     "data/processed/residue_features.csv": (
-        "1dbd4e33ce74ebb6afbb7a6cf0623744331abd30ba6620c225bb8e43345a4c03"
+        "44fd50744d7ade9b6236c168a2a74c2dcdbeecd5bbdca6febfcac8397a76f644"
     ),
 }
 
@@ -276,35 +276,42 @@ def _model_frame(
     )
 
 
-def _validate_stage35_summary(repo_root: Path) -> Mapping[str, object]:
+def _validate_sequence_structure_summary(repo_root: Path) -> Mapping[str, object]:
     path = (
         repo_root
         / "data/interim/sequence_structure_complementarity"
         / "sequence_structure_summary.json"
     )
     if not path.is_file():
-        raise BiologicalModelDifferenceError("Stage-35 summary is absent")
+        raise BiologicalModelDifferenceError(
+            "Sequence/graph combination summary is absent"
+        )
     summary = json.loads(path.read_text(encoding="utf-8"))
     if summary.get("status") != "PASS":
-        raise BiologicalModelDifferenceError("Stage-35 summary is not PASS")
+        raise BiologicalModelDifferenceError(
+            "Sequence/graph combination summary is not PASS"
+        )
     if summary.get("model_id") != MIXTURE_MODEL:
         raise BiologicalModelDifferenceError(
-            "Stage-35 terminology normalisation must be completed before Stage 36"
+            "Sequence/graph combination terminology must be current before "
+            "biological model-difference analysis"
         )
     if summary.get("final_evaluation_labels_used_for_weight_selection") is not False:
         raise BiologicalModelDifferenceError(
-            "Stage-35 does not confirm final-label separation for weight selection"
+            "Sequence/graph combination summary does not confirm final-label "
+            "separation for weight selection"
         )
     if (
         summary.get("cross_protein_target_labels_used_for_weight_selection")
         is not False
     ):
         raise BiologicalModelDifferenceError(
-            "Stage-35 does not confirm target-label separation"
+            "Sequence/graph combination summary does not confirm target-label "
+            "separation"
         )
     if summary.get("diagnostic_oracle_used_for_model_selection") is not False:
         raise BiologicalModelDifferenceError(
-            "Stage-35 diagnostic oracle was used for model selection"
+            "Sequence/graph combination diagnostic oracle was used for model selection"
         )
     return summary
 
@@ -320,7 +327,7 @@ def _load_inputs(repo_root: Path) -> Mapping[str, pd.DataFrame]:
                 f"Established input identity changed for {relative}: {observed}"
             )
 
-    _validate_stage35_summary(repo_root)
+    _validate_sequence_structure_summary(repo_root)
 
     graph = _read_prediction(
         repo_root
@@ -391,11 +398,12 @@ def _build_matched_predictions(tables: Mapping[str, pd.DataFrame]) -> pd.DataFra
     centre = graph_all[graph_all["model_id"].astype(str).eq(CENTRE_MODEL)].copy()
     if len(graph) != EXPECTED_ROWS or len(centre) != EXPECTED_ROWS:
         raise BiologicalModelDifferenceError(
-            "Stage-32 graph/centre model row counts do not match "
-            "the expected population"
+            "Residue-graph/centre model row counts do not match the expected population"
         )
     if graph.duplicated(KEY_COLUMNS).any() or centre.duplicated(KEY_COLUMNS).any():
-        raise BiologicalModelDifferenceError("Stage-32 model identities are duplicated")
+        raise BiologicalModelDifferenceError(
+            "Residue-graph/centre model identities are duplicated"
+        )
 
     base = graph[[*KEY_COLUMNS, *BASE_FIELDS, "y_pred"]].rename(
         columns={"y_pred": "graph_prediction"}
@@ -521,7 +529,7 @@ def _position_summary(matched: pd.DataFrame, residue: pd.DataFrame) -> pd.DataFr
     )
     if structure_match.isna().any() or not structure_match.all():
         raise BiologicalModelDifferenceError(
-            "Stage-36 matched positions are not fully covered by matching "
+            "Biological model-difference positions are not fully covered by matching "
             "experimental structures"
         )
     return positions

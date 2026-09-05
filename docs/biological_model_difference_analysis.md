@@ -1,8 +1,8 @@
 # Biological model-difference analysis
 
-Stage 36 examines where predictive information from residue structure, geometric message passing, sequence representation, and their joint model changes prediction error. It is a post-evaluation analysis: it does not tune a model and it does not use final evaluation outcomes to select settings.
+The biological model-difference analysis examines where prediction information from residue structure, geometric message passing, sequence representation, and their joint model changes prediction error. It is a post-evaluation analysis: it does not tune a model and it does not use final evaluation outcomes to select settings.
 
-The matched population is the 118,204 observations used by the residue-graph, geometric, sequence-plus-residue-graph, and validation-selected sequence/graph analyses. The ESMC prediction table contains additional sequence-eligible observations; Stage 36 retains only the observations that are present in the matched structural population.
+The matched population is the 118,204 observations used by the residue-graph, geometric, sequence-plus-residue-graph, and validation-selected sequence/graph analyses. The ESMC prediction table contains additional sequence-eligible observations; the biological model-difference analysis retains only the observations that are present in the matched structural population.
 
 Five error contrasts are reported. Each contrast is the absolute error of the first named model minus the absolute error of the reference model, so a negative value favours the first named model:
 

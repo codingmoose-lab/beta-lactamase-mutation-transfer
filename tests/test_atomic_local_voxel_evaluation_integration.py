@@ -11,6 +11,11 @@ from betalactamase_transfer.atomic_local_voxel_evaluation import (
 )
 
 
+@pytest.mark.filterwarnings(
+    "ignore:divide by zero encountered in matmul:RuntimeWarning"
+)
+@pytest.mark.filterwarnings("ignore:overflow encountered in matmul:RuntimeWarning")
+@pytest.mark.filterwarnings("ignore:invalid value encountered in matmul:RuntimeWarning")
 def test_atomic_local_voxel_input_review_contract() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     required = repo_root / "data/interim/residue_graphs/residue_graph_nodes.csv"

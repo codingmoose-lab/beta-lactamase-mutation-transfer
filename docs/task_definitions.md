@@ -61,7 +61,7 @@ Scores are not normalised, rescaled, or harmonised across studies or experimenta
 
 For the matched NDM-1/VIM-2 ampicillin transfer analysis, each protein retains its original assay scale.
 
-Spearman correlation is the primary transfer metric. Pearson correlation, MAE, and RMSE provide additional descriptions of predictive agreement.
+Spearman correlation is the primary transfer metric. Pearson correlation, MAE, and RMSE provide additional descriptions of prediction agreement.
 
 Raw unfloored scores may be examined in sensitivity analyses.
 

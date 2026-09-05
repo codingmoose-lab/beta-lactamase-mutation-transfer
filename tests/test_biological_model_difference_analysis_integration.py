@@ -29,9 +29,9 @@ def test_biological_model_difference_input_contract() -> None:
     if not all(path.is_file() for path in required):
         pytest.skip("Full repository data are not present in this test copy")
 
-    stage35_summary = json.loads(required[-1].read_text(encoding="utf-8"))
-    if stage35_summary.get("model_id") != module.MIXTURE_MODEL:
-        pytest.skip("Stage-35 terminology normalisation has not yet been applied")
+    sequence_structure_summary = json.loads(required[-1].read_text(encoding="utf-8"))
+    if sequence_structure_summary.get("model_id") != module.MIXTURE_MODEL:
+        pytest.skip("Sequence/graph combination terminology has not yet been updated")
 
     summary = module.inspect_biological_model_difference_inputs(REPO_ROOT)
     assert summary["status"] == "PASS"

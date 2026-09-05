@@ -28,7 +28,7 @@ Three levels are retained.
 
 Prediction-level errors preserve every Script 28 test observation.
 
-Evaluation-group summaries preserve the dependency groups used by the predictive
+Evaluation-group summaries preserve the dependency groups used by the prediction
 evaluation. Position-grouped schemes therefore remain grouped by residue position,
 while the VIM-2 concentration experiment retains its mutation-trajectory groups.
 
@@ -40,7 +40,7 @@ residue as independent observations of the same residue-level structural quantit
 
 ## Biological reference analyses
 
-The primary biological reference variables were not predictive inputs to the
+The primary biological reference variables were not prediction inputs to the
 experimental-structure model:
 
 - minimum atom distance to the nearest selected catalytic Zn²⁺;

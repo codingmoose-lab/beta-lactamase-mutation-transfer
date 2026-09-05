@@ -1,6 +1,6 @@
 # Condition-transfer evaluation
 
-Stage 39 evaluates five VIM-2 Chen et al. (2020) transfer schemes already defined before model fitting: three held-out-antibiotic tests at the study-defined high screening condition and both AMP temperature directions.
+The condition-transfer evaluation covers five VIM-2 Chen et al. (2020) transfer schemes already defined before model fitting: three held-out-antibiotic tests at the study-defined high screening condition and both AMP temperature directions.
 
 Model settings are selected only from the source-condition rows using the existing five mutation-group folds. Target-condition scores are not used to choose hidden states, ridge penalties, model families, or any other setting.
 
@@ -12,4 +12,4 @@ Two evaluation populations are reported. `sequence_eligible` contains the comple
 
 The primary reference is `source_antibiotic_mean` for held-out-antibiotic tests and `source_temperature_matched` for temperature transfer. Paired metric differences use mutation-group bootstrap resampling. Positive paired differences always mean that the fitted model performs better than the direct source-condition reference.
 
-Stage 39 does not fit residue-graph, EGNN, or sequence-plus-graph neural models. Those models would require either omitting the held-out antibiotic identity, which duplicates the information question already tested by the sequence and structure ridge models, or introducing an unlearned antibiotic category. This stage keeps the comparison focused on whether sequence or WT experimental-structure information improves transfer beyond directly observed effects of the same mutations under source conditions.
+The condition-transfer evaluation does not fit residue-graph, EGNN, or sequence-plus-graph neural models. Those models would require either omitting the held-out antibiotic identity, which duplicates the information question already tested by the sequence and structure ridge models, or introducing an unlearned antibiotic category. The comparison remains focused on whether sequence or WT experimental-structure information improves transfer relative to directly observed effects of the same mutations under source conditions.

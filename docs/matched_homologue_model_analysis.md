@@ -1,6 +1,6 @@
 # Matched homologue model analysis
 
-Stage 42 asks how already fitted cross-protein models behave on the 1,513 directly comparable NDM-1/VIM-2 substitutions at the 81 aligned positions that share the same wild-type residue. The pair population was defined without mutation-effect values. NDM-1 to VIM-2 and VIM-2 to NDM-1 remain separate prediction directions.
+The matched-homologue model analysis asks how already fitted cross-protein models behave on the 1,513 directly comparable NDM-1/VIM-2 substitutions at the 81 aligned positions that share the same wild-type residue. The pair population was defined without mutation-effect values. NDM-1 to VIM-2 and VIM-2 to NDM-1 remain separate prediction directions.
 
 The analysis does not fit or retune a model. It reuses the target-protein predictions already produced for ESMC, ESM-2, the experimental-structure descriptor model and its mutation/condition comparator, the centre-residue neural control, the residue graph model, the residue-geometry model, and the sequence-plus-graph model. Every included model must cover all 1,513 target substitutions in each direction and its stored target values must agree with the matched homologue table.
 
@@ -14,7 +14,7 @@ The analysis also measures whether model error changes with the observed NDM-1/V
 
 A position summary reports the magnitude of background differences, floor-state composition, and the range of median errors across the already established models. Positions with large values are candidates for later biological interpretation rather than automatically being labelled mechanistic resistance sites.
 
-The 132 publication-reported WT-reversion comparison rows remain separate supporting evidence. They are not used to define the 1,513-pair population, choose model settings, or select models in Stage 42.
+The 132 publication-reported WT-reversion comparison rows remain separate supporting evidence. They are not used to define the 1,513-pair population, choose model settings, or select models in the matched-homologue model analysis.
 
 Run the input check first:
 

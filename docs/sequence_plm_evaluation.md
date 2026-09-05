@@ -3,7 +3,7 @@
 ## Scientific question
 
 The protein-language-model analysis tests whether pretrained protein sequence
-information improves mutation-effect prediction beyond mutation identity,
+information improves mutation-effect prediction relative to mutation identity,
 assay condition, and local amino-acid neighbourhood.
 
 The analysis reuses the predefined task definitions and leakage-resistant
@@ -16,7 +16,7 @@ ESMC inputs use the experimentally verified NDM-1 and VIM-2 assay constructs.
 This preserves assay residue numbering and wild-type identity.
 
 The evaluator checks assay-sequence lengths and SHA-256 digests against the
-provenance stored with the extracted embeddings.
+source and extraction records stored with the extracted embeddings.
 
 ## Pretrained model
 
@@ -40,7 +40,7 @@ The PLM feature is:
 The mutation-to-embedding index records protein identity, assay mutation, assay
 position, wild-type residue, mutant residue, and mutant-sequence SHA-256.
 
-## Extraction provenance
+## Extraction record
 
 The extraction environment used:
 
@@ -70,7 +70,7 @@ VIM-2 positions in the rectangular wild-type array are storage padding outside
 the biological assay sequence and are never used for evaluation. All embeddings
 over biological residue ranges are required to be finite.
 
-## Predictive model
+## Prediction model
 
 The primary model is `esmc_site_delta_ridge`.
 
@@ -104,7 +104,7 @@ The evaluated schemes are:
 
 Within-protein position-grouped experiments use grouped outer evaluation with
 inner validation. The VIM-2 2022 experiment remains mutation-grouped and tests
-generalisation to unseen mutations, not unseen positions.
+performance on unseen mutations rather than unseen positions.
 
 Cross-protein transfer selects model settings using source-protein grouped
 cross-validation and evaluates the target protein only after source-side model
@@ -139,7 +139,7 @@ grouping unit defined by the evaluation scheme.
 Before ESMC evaluation is accepted, the implementation verifies the ESMC
 model identity and revision, hidden-state indices, embedding dimensions,
 embedding-index digest, contiguous embedding rows, protein identities,
-assay-sequence provenance, finite biological embedding ranges, absence of
+assay-sequence source records, finite biological embedding ranges, absence of
 outcomes from modelling-membership tables, and availability of all core
 evaluation schemes.
 
