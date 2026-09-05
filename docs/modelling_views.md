@@ -34,7 +34,7 @@ The default condition inputs are:
 - concentration
 - temperature
 
-`protein_id` and `assay_position` are used to select the appropriate protein sequence, residue features, and structure-derived data. They are not default scalar predictors.
+`protein_id` and `assay_position` are used to select the appropriate protein sequence, residue features, and structural data. They are not default scalar predictors.
 
 `score_analysis` is the primary DMS prediction target and is not stored in `scheme_observation_membership.csv`.
 
@@ -42,7 +42,7 @@ The default condition inputs are:
 
 `score_uncertainty` is retained for uncertainty-related analyses and is not part of the default predictor set.
 
-## Structure-derived inputs
+## Structural inputs
 
 Experimental structure descriptors include solvent accessibility, local residue-neighbour counts, contact counts, and reduced secondary-structure assignments.
 

@@ -45,7 +45,7 @@ python scripts/data/11_acquire_card_ontology.py \
 python scripts/data/12_prepare_card_context.py
 ```
 
-CARD is used for AMR family, drug-class, and mechanism context. Direct exact-term assertions remain distinguishable from family- or ancestry-derived context.
+CARD is used for AMR family, drug-class, and mechanism context. Direct exact-term assertions remain distinguishable from family context or context inherited through ontology ancestry.
 
 ## Residue evidence
 
@@ -55,7 +55,7 @@ python scripts/data/13_prepare_residue_evidence.py
 
 This command prepares one row for every assay residue using the selected PDB chain, UniProt correspondence, AlphaFold mapping/confidence, coordinate-quality fields, and M-CSA reference correspondence. M-CSA correspondence is retained as reference correspondence and is not converted into a direct experimental catalytic label.
 
-The command also prepares the complete publication-derived NDM-1/VIM-2 DMS position correspondence from the Chen et al. (2024) source data. Publication VIM-2 positions are converted through the validated reference-to-assay mapping. The resulting 217 one-to-one pairs comprise 81 shared-WT and 136 differing-WT positions. The separate 132 WT-reversion comparison rows remain outcome-derived supporting evidence and are not used to construct the correspondence.
+The command also prepares the complete publication-reported NDM-1/VIM-2 DMS position correspondence from the Chen et al. (2024) source data. Publication VIM-2 positions are converted through the validated reference-to-assay mapping. The resulting 217 one-to-one pairs comprise 81 shared-WT and 136 differing-WT positions. The separate 132 WT-reversion comparison rows remain outcome-based supporting evidence and are not used to construct the correspondence.
 
 ## Experimental structural descriptors
 
@@ -324,3 +324,44 @@ graph construction. Core evaluation membership is used only to verify graph
 coverage after topology has been created.
 
 See `docs/residue_graphs.md`.
+
+
+## Sequence-structure complementarity
+
+After the residue-graph and sequence-plus-residue-graph evaluations have been checked,
+review the Stage-35 inputs with:
+
+```bash
+python scripts/data/35_analyze_sequence_structure_complementarity.py --check-only
+```
+
+For the existing completed Stage-35 records created before the terminology cleanup, run
+`--normalise-existing-results` once. This changes labels, column names, and checkpoint
+directory names only; it does not refit a model or change numerical predictions. New
+Stage-35 runs use the validation terminology directly.
+
+See `docs/sequence_structure_complementarity.md`.
+
+## Biological model-difference analysis
+
+After Stage 35 uses the validation terminology, inspect the Stage-36 input contract with:
+
+```bash
+python scripts/data/36_analyze_biological_model_differences.py --check-only
+```
+
+Then run:
+
+```bash
+python scripts/data/36_analyze_biological_model_differences.py
+```
+
+Stage 36 does not fit or select a predictive model. It compares matched absolute-error
+differences for the centre-residue control, residue graph, geometric residue model, ESMC
+sequence model, sequence-plus-residue-graph model, and validation-selected prediction
+combination. Structural analyses use protein positions as the statistical unit. Condition
+summaries resample the evaluation-group identifier. Correlated structural variables are
+not combined into a single coefficient model, and no causal interpretation is assigned
+to the reported structural associations.
+
+See `docs/biological_model_difference_analysis.md`.

@@ -27,7 +27,7 @@ beta-lactamase-mutation-transfer
 │  │  │  ├─ assays.csv
 │  │  │  ├─ condition_score_statistics.csv
 │  │  │  ├─ cross_protein_conditions.csv
-│  │  │  ├─ derived_value_relationships.csv
+│  │  │  ├─ comparison_value_relationships.csv
 │  │  │  └─ measurement_groups.csv
 │  │  ├─ baseline_evaluation
 │  │  │  ├─ baseline_bootstrap_intervals.csv
@@ -310,7 +310,13 @@ beta-lactamase-mutation-transfer
 │     ├─ 27_evaluate_experimental_structure.py
 │     ├─ 28_compare_structure_matched_models.py
 │     ├─ 29_analyze_biological_errors.py
-│     └─ 30_prepare_residue_graphs.py
+│     ├─ 30_prepare_residue_graphs.py
+│     ├─ 31_evaluate_residue_neighbourhood.py
+│     ├─ 32_evaluate_residue_graph_neural.py
+│     ├─ 33_evaluate_residue_geometry_neural.py
+│     ├─ 34_evaluate_sequence_residue_graph.py
+│     ├─ 35_analyze_sequence_structure_complementarity.py
+│     └─ 36_analyze_biological_model_differences.py
 ├─ src
 │  └─ betalactamase_transfer
 │     ├─ __init__.py
@@ -320,6 +326,7 @@ beta-lactamase-mutation-transfer
 │     ├─ baseline_evaluation.py
 │     ├─ baseline_uncertainty.py
 │     ├─ biological_error_analysis.py
+│     ├─ biological_model_difference_analysis.py
 │     ├─ card_context.py
 │     ├─ evaluation_partitions.py
 │     ├─ experimental_structure_evaluation.py
@@ -356,6 +363,8 @@ beta-lactamase-mutation-transfer
    ├─ test_baseline_uncertainty.py
    ├─ test_biological_error_analysis.py
    ├─ test_biological_error_analysis_integration.py
+   ├─ test_biological_model_difference_analysis.py
+   ├─ test_biological_model_difference_analysis_integration.py
    ├─ test_card_context.py
    ├─ test_card_context_integration.py
    ├─ test_evaluation_partitions.py
