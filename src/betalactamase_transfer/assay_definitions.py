@@ -48,8 +48,11 @@ def _score_registry() -> List[Mapping[str, object]]:
         "score_direction": "higher_is_fitter_than_wild_type",
         "wild_type_reference": "wild-type-normalised enrichment ratio",
         "principal_outcome": "DMS fitness",
-        "score_floor": -4.0,
-        "score_floor_interpretation": "scores at or below -4 treated as nonsense-like",
+        "minimum_fitness_score": -4.0,
+        "minimum_fitness_score_interpretation": (
+            "scores at or below -4 treated as the "
+            "nonsense-variant low-fitness reference"
+        ),
         "imputation_policy": "do_not_impute_missing_scores",
     }
     return [

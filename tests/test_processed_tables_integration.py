@@ -68,7 +68,7 @@ def test_processed_tables_real_data_if_available() -> None:
         "condition_input",
         "grouping",
         "evaluation_only",
-        "provenance_quality",
+        "source_quality_metadata",
     }
     allowed = set(roles.loc[roles["default_model_input_allowed"], "column_name"])
     assert allowed == {
@@ -80,19 +80,25 @@ def test_processed_tables_real_data_if_available() -> None:
     }
     assert not roles.loc[
         roles["role"].isin(
-            {"outcome", "grouping", "evaluation_only", "provenance_quality"}
+            {"outcome", "grouping", "evaluation_only", "source_quality_metadata"}
         ),
         "default_model_input_allowed",
     ].any()
 
-    assert (observations["score_analysis"] >= observations["score_floor"]).all()
-    above_floor = observations["score_original"] >= observations["score_floor"]
-    assert observations.loc[above_floor, "score_analysis"].equals(
-        observations.loc[above_floor, "score_original"]
+    assert (
+        observations["score_analysis"] >= observations["minimum_fitness_score"]
+    ).all()
+    at_or_above_minimum = (
+        observations["score_original"] >= observations["minimum_fitness_score"]
     )
-    below_floor = observations["score_original"] < observations["score_floor"]
-    assert observations.loc[below_floor, "score_analysis"].equals(
-        observations.loc[below_floor, "score_floor"]
+    assert observations.loc[at_or_above_minimum, "score_analysis"].equals(
+        observations.loc[at_or_above_minimum, "score_original"]
+    )
+    below_minimum = (
+        observations["score_original"] < observations["minimum_fitness_score"]
+    )
+    assert observations.loc[below_minimum, "score_analysis"].equals(
+        observations.loc[below_minimum, "minimum_fitness_score"]
     )
 
     assert not observations["observation_id"].duplicated().any()

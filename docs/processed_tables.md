@@ -64,7 +64,7 @@ Every column in `observations.csv` is assigned one of the following roles in `ob
 - `condition_input`
 - `grouping`
 - `evaluation_only`
-- `provenance_quality`
+- `source_quality_metadata`
 
 Wild-type and mutant amino-acid identity are mutation inputs.
 

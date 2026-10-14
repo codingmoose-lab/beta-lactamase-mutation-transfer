@@ -70,7 +70,7 @@ OBSERVATION_ROLE_COLUMNS: Mapping[str, tuple[str, ...]] = {
         "experimental_structure_task_eligible",
         "alphafold_structure_task_eligible",
     ),
-    "provenance_quality": (
+    "source_quality_metadata": (
         "observation_id",
         "source_record_id",
         "study_id",
@@ -90,8 +90,8 @@ OBSERVATION_ROLE_COLUMNS: Mapping[str, tuple[str, ...]] = {
         "score_direction",
         "wild_type_reference",
         "principal_outcome",
-        "score_floor",
-        "score_floor_interpretation",
+        "minimum_fitness_score",
+        "minimum_fitness_score_interpretation",
         "imputation_policy",
         "host_system",
         "selection_duration_hours",
@@ -120,11 +120,11 @@ OBSERVATION_COLUMN_NOTES = {
     ),
     "score_original": (
         "Unmodified experimental outcome on the source-assay scale; retained for "
-        "provenance and sensitivity analyses."
+        "source tracking and sensitivity analyses."
     ),
     "score_analysis": (
         "Publication-aligned DMS analysis outcome with the assay-defined lower "
-        "fitness floor applied; primary regression target."
+        "minimum fitness score applied; primary regression target."
     ),
     "score_uncertainty": (
         "Outcome uncertainty for weighting or uncertainty analysis; "
@@ -470,8 +470,8 @@ def _prepare_observations(
         "score_direction",
         "wild_type_reference",
         "principal_outcome",
-        "score_floor",
-        "score_floor_interpretation",
+        "minimum_fitness_score",
+        "minimum_fitness_score_interpretation",
         "imputation_policy",
         "host_system",
         "selection_duration_hours",
@@ -539,20 +539,28 @@ def _prepare_observations(
             "Processed observations contain non-valid sequence mappings"
         )
 
-    score_floor = pd.to_numeric(frame["score_floor"], errors="raise")
-    if score_floor.isna().any():
-        raise ProcessedTableError("DMS observations are missing an assay score floor")
+    minimum_fitness_score = pd.to_numeric(
+        frame["minimum_fitness_score"], errors="raise"
+    )
+    if minimum_fitness_score.isna().any():
+        raise ProcessedTableError(
+            "DMS observations are missing an assay minimum fitness score"
+        )
     frame["score_analysis"] = np.maximum(
         pd.to_numeric(frame["score_original"], errors="raise"),
-        score_floor,
+        minimum_fitness_score,
     )
-    if (frame["score_analysis"] < score_floor).any():
-        raise ProcessedTableError("Publication-aligned DMS score floor was not applied")
-    if not frame.loc[frame["score_original"] >= score_floor, "score_analysis"].equals(
-        frame.loc[frame["score_original"] >= score_floor, "score_original"]
+    if (frame["score_analysis"] < minimum_fitness_score).any():
+        raise ProcessedTableError(
+            "Publication-aligned DMS minimum fitness score was not applied"
+        )
+    if not frame.loc[
+        frame["score_original"] >= minimum_fitness_score, "score_analysis"
+    ].equals(
+        frame.loc[frame["score_original"] >= minimum_fitness_score, "score_original"]
     ):
         raise ProcessedTableError(
-            "DMS score transformation changed values above the assay floor"
+            "DMS score transformation changed values above the assay minimum"
         )
 
     frame["score_uncertainty_available"] = frame["score_uncertainty"].notna()
@@ -776,8 +784,8 @@ def prepare_processed_tables(repo_root: Path) -> Mapping[str, object]:
         ),
         "score_policy": (
             "score_original remains unchanged on its source-assay scale; "
-            "score_analysis applies only the publication-defined lower DMS fitness "
-            "floor and no "
+            "score_analysis applies the reported "
+            "minimum fitness score and no "
             "global pooling, rescaling, standardisation, or imputation"
         ),
         "partition_policy": (
