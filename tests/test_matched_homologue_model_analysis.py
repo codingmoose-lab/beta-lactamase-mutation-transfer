@@ -40,17 +40,17 @@ def test_metric_difference_positive_always_favours_model() -> None:
     assert np.isclose(_metric_difference("rmse", 1.0, 1.5), 0.5)
 
 
-def test_neither_at_floor_population_is_selected_without_other_floor_states() -> None:
+def test_both_above_minimum_population_is_selected_without_other_floor_states() -> None:
     frame = pd.DataFrame(
         {
-            "floor_class": [
-                "neither_at_floor",
-                "both_at_floor",
-                "source_only_at_floor",
-                "target_only_at_floor",
+            "minimum_score_class": [
+                "both_above_minimum",
+                "both_at_minimum",
+                "source_at_minimum",
+                "target_at_minimum",
             ],
             "value": [1, 2, 3, 4],
         }
     )
-    selected = _population_subset(frame, "neither_at_floor")
+    selected = _population_subset(frame, "both_above_minimum")
     assert selected["value"].tolist() == [1]

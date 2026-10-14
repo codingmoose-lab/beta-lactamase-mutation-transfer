@@ -7,8 +7,8 @@ import pandas as pd
 
 from betalactamase_transfer.homologue_baseline_analysis import (
     COMPARATOR_BASELINES,
+    _prepare_above_minimum_analysis,
     _prepare_direction_table,
-    _prepare_nonfloor_analysis,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -48,20 +48,20 @@ def test_matched_population_uses_saved_predictions_and_valid_score_joins() -> No
             assert table[f"{baseline_id}_prediction"].notna().all()
 
         assert (
-            table["floor_class"]
+            table["minimum_score_class"]
             .isin(
                 {
-                    "neither_at_floor",
-                    "both_at_floor",
-                    "source_only_at_floor",
-                    "target_only_at_floor",
+                    "both_above_minimum",
+                    "both_at_minimum",
+                    "source_at_minimum",
+                    "target_at_minimum",
                 }
             )
             .all()
         )
 
 
-def test_nonfloor_and_discordant_floor_contracts() -> None:
+def test_above_minimum_and_discordant_floor_contracts() -> None:
     matched = pd.concat(
         _matched_tables(),
         ignore_index=True,
@@ -73,14 +73,14 @@ def test_nonfloor_and_discordant_floor_contracts() -> None:
         discordant,
         discordant_summary,
         summary,
-    ) = _prepare_nonfloor_analysis(
+    ) = _prepare_above_minimum_analysis(
         matched,
         bootstrap_replicates=100,
     )
 
-    assert summary["nonfloor_pair_count_per_direction"] == 478
-    assert summary["nonfloor_homologue_position_count"] == 63
-    assert summary["discordant_floor_pair_count"] == 306
+    assert summary["above_minimum_pair_count_per_direction"] == 478
+    assert summary["above_minimum_homologue_position_count"] == 63
+    assert summary["discordant_minimum_score_pair_count"] == 306
 
     assert set(metrics["direction"]) == {
         "NDM-1_to_VIM-2",
@@ -100,10 +100,10 @@ def test_nonfloor_and_discordant_floor_contracts() -> None:
 
     counts = dict(
         zip(
-            discordant_summary["floor_switch_direction"],
+            discordant_summary["minimum_score_switch_direction"],
             discordant_summary["n_pairs"],
         )
     )
 
-    assert counts["NDM_floor_VIM_nonfloor"] == 118
-    assert counts["NDM_nonfloor_VIM_floor"] == 188
+    assert counts["NDM_at_minimum_VIM_above_minimum"] == 118
+    assert counts["NDM_above_minimum_VIM_at_minimum"] == 188

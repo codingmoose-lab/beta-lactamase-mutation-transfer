@@ -17,7 +17,7 @@ DIRECTIONS = (
 METRICS = ("spearman", "pearson", "mae", "rmse")
 POPULATIONS = (
     "all_shared_wild_type_pairs",
-    "neither_at_floor",
+    "both_above_minimum",
 )
 REFERENCE_MODELS = (
     "direct_homologue_source_effect",
@@ -159,7 +159,7 @@ def _load_inputs(
     ]
     if missing:
         raise MatchedHomologueModelAnalysisError(
-            f"Required Stage-42 inputs are missing: {missing}"
+            f"Required matched-homologue model analysis inputs are missing: {missing}"
         )
 
     input_hashes = {
@@ -185,7 +185,8 @@ def _load_inputs(
     )
     if len(pairs) != 1513 or pairs["homologue_position_id"].nunique() != 81:
         raise MatchedHomologueModelAnalysisError(
-            "Stage 42 requires 1,513 substitutions across 81 shared-WT positions"
+            "Matched-homologue model analysis requires 1,513 substitutions "
+            "across 81 shared-WT positions"
         )
     outcome_use = pairs["pairing_uses_outcome_values"].astype(str).str.lower()
     if outcome_use.isin({"true", "1"}).any():
@@ -211,7 +212,7 @@ def _load_inputs(
             "target_effect",
             "predicted_target_effect",
             "substitution_mean_prediction",
-            "floor_class",
+            "minimum_score_class",
             "background_difference_analysis",
             "absolute_background_difference_analysis",
         },
@@ -289,7 +290,7 @@ def _assemble_predictions(
         "target_observation_id",
         "source_effect",
         "target_effect",
-        "floor_class",
+        "minimum_score_class",
         "background_difference_analysis",
         "absolute_background_difference_analysis",
     ]
@@ -370,7 +371,7 @@ def _assemble_predictions(
         "target_observation_id",
         "source_effect",
         "target_effect",
-        "floor_class",
+        "minimum_score_class",
         "background_difference_analysis",
         "absolute_background_difference_analysis",
         "model_source",
@@ -391,8 +392,8 @@ def _assemble_predictions(
 def _population_subset(frame: pd.DataFrame, population: str) -> pd.DataFrame:
     if population == "all_shared_wild_type_pairs":
         return frame
-    if population == "neither_at_floor":
-        return frame.loc[frame["floor_class"].eq("neither_at_floor")]
+    if population == "both_above_minimum":
+        return frame.loc[frame["minimum_score_class"].eq("both_above_minimum")]
     raise MatchedHomologueModelAnalysisError(f"Unknown population: {population}")
 
 
@@ -673,7 +674,7 @@ def _pair_summary(predictions: pd.DataFrame) -> pd.DataFrame:
             "target_observation_id",
             "source_effect",
             "target_effect",
-            "floor_class",
+            "minimum_score_class",
             "background_difference_analysis",
             "absolute_background_difference_analysis",
         ]
@@ -752,16 +753,18 @@ def _position_summary(predictions: pd.DataFrame) -> pd.DataFrame:
                 "absolute_background_difference_analysis",
                 "max",
             ),
-            fraction_neither_at_floor=(
-                "floor_class",
-                lambda values: float(np.mean(pd.Series(values).eq("neither_at_floor"))),
+            fraction_both_above_minimum=(
+                "minimum_score_class",
+                lambda values: float(
+                    np.mean(pd.Series(values).eq("both_above_minimum"))
+                ),
             ),
-            fraction_discordant_floor=(
-                "floor_class",
+            fraction_discordant_minimum_score=(
+                "minimum_score_class",
                 lambda values: float(
                     np.mean(
                         pd.Series(values).isin(
-                            {"source_only_at_floor", "target_only_at_floor"}
+                            {"source_at_minimum", "target_at_minimum"}
                         )
                     )
                 ),
@@ -849,19 +852,19 @@ def _validate_output_contract(
 def run_matched_homologue_model_analysis(
     repo_root: Path,
     *,
-    check_only: bool = False,
+    validate_inputs: bool = False,
 ) -> Mapping[str, object]:
     baseline, prediction_frames, input_hashes = _load_inputs(repo_root)
     predictions = _assemble_predictions(baseline, prediction_frames)
 
     input_review = {
         "status": "PASS",
-        "check_only": check_only,
+        "validate_inputs": validate_inputs,
         "analysis_is_post_hoc_and_does_not_refit_models": True,
         "pair_count_per_direction": 1513,
         "homologue_position_count": 81,
-        "nonfloor_pair_count_per_direction": 478,
-        "nonfloor_homologue_position_count": 63,
+        "above_minimum_pair_count_per_direction": 478,
+        "above_minimum_homologue_position_count": 63,
         "advanced_model_count": len(ADVANCED_MODELS),
         "reference_models": list(REFERENCE_MODELS),
         "supporting_reported_comparison_rows": 132,
@@ -870,7 +873,7 @@ def run_matched_homologue_model_analysis(
         "resampling_unit": "homologue_position_id",
         "input_sha256": input_hashes,
     }
-    if check_only:
+    if validate_inputs:
         return input_review
 
     metrics = _metric_table(predictions)
@@ -915,7 +918,7 @@ def run_matched_homologue_model_analysis(
 
     summary: dict[str, object] = {
         **input_review,
-        "check_only": False,
+        "validate_inputs": False,
         "prediction_row_count": len(predictions),
         "metric_row_count": len(metrics),
         "comparison_row_count": len(comparisons),

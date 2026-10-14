@@ -12,7 +12,7 @@ from betalactamase_transfer.matched_homologue_model_analysis import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_stage42_input_population_and_prediction_coverage() -> None:
+def test_homologue_eval_input_population_and_prediction_coverage() -> None:
     baseline, prediction_frames, _ = _load_inputs(REPO_ROOT)
     predictions = _assemble_predictions(baseline, prediction_frames)
 
@@ -27,14 +27,16 @@ def test_stage42_input_population_and_prediction_coverage() -> None:
     counts = predictions.groupby(["direction", "model_id"]).size().reset_index(name="n")
     assert counts["n"].eq(1513).all()
 
-    nonfloor = predictions.loc[predictions["floor_class"].eq("neither_at_floor")]
-    nonfloor_counts = (
-        nonfloor.groupby(["direction", "model_id"]).size().reset_index(name="n")
+    above_minimum = predictions.loc[
+        predictions["minimum_score_class"].eq("both_above_minimum")
+    ]
+    above_minimum_counts = (
+        above_minimum.groupby(["direction", "model_id"]).size().reset_index(name="n")
     )
-    assert nonfloor_counts["n"].eq(478).all()
+    assert above_minimum_counts["n"].eq(478).all()
 
 
-def test_stage42_model_predictions_match_saved_targets() -> None:
+def test_homologue_eval_model_predictions_match_saved_targets() -> None:
     baseline, prediction_frames, _ = _load_inputs(REPO_ROOT)
     predictions = _assemble_predictions(baseline, prediction_frames)
     assert predictions["target_effect"].notna().all()

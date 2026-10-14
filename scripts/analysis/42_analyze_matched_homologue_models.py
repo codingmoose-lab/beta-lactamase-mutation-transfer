@@ -17,14 +17,16 @@ from betalactamase_transfer.matched_homologue_model_analysis import (  # noqa: E
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--validate-inputs", action="store_true")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse_args()
-    summary = run_matched_homologue_model_analysis(ROOT, check_only=args.check_only)
-    if args.check_only:
+    summary = run_matched_homologue_model_analysis(
+        ROOT, validate_inputs=args.validate_inputs
+    )
+    if args.validate_inputs:
         print("MATCHED HOMOLOGUE MODEL INPUT REVIEW PASSED")
     else:
         print("MATCHED HOMOLOGUE MODEL ANALYSIS PASSED")

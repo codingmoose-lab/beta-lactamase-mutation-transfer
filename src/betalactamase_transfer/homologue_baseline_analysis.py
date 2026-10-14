@@ -93,13 +93,13 @@ def _direction_scheme(direction: str) -> str:
         ) from exc
 
 
-def _floor_class(source: pd.Series, target: pd.Series) -> pd.Series:
+def _minimum_score_class(source: pd.Series, target: pd.Series) -> pd.Series:
     source_floor = source.eq(-4.0)
     target_floor = target.eq(-4.0)
-    result = pd.Series("neither_at_floor", index=source.index, dtype="string")
-    result.loc[source_floor & target_floor] = "both_at_floor"
-    result.loc[source_floor & ~target_floor] = "source_only_at_floor"
-    result.loc[~source_floor & target_floor] = "target_only_at_floor"
+    result = pd.Series("both_above_minimum", index=source.index, dtype="string")
+    result.loc[source_floor & target_floor] = "both_at_minimum"
+    result.loc[source_floor & ~target_floor] = "source_at_minimum"
+    result.loc[~source_floor & target_floor] = "target_at_minimum"
     return result
 
 
@@ -210,7 +210,7 @@ def _prepare_direction_table(
             "Direct target effect disagrees with score_analysis"
         )
 
-    table["floor_class"] = _floor_class(
+    table["minimum_score_class"] = _minimum_score_class(
         table["source_score_analysis"], table["target_score_analysis"]
     )
     table["background_difference_analysis"] = (
@@ -343,8 +343,8 @@ def _sensitivity_rows(table: pd.DataFrame) -> list[Mapping[str, object]]:
     rows: list[Mapping[str, object]] = []
     subsets = {
         "all_pairs_analysis_score": table,
-        "neither_at_floor_analysis_score": table.loc[
-            table["floor_class"].eq("neither_at_floor")
+        "both_above_minimum_analysis_score": table.loc[
+            table["minimum_score_class"].eq("both_above_minimum")
         ],
         "all_pairs_original_score": table,
     }
@@ -373,7 +373,10 @@ def _sensitivity_rows(table: pd.DataFrame) -> list[Mapping[str, object]]:
     return rows
 
 
-NONFLOOR_BOOTSTRAP_SEED = "beta_lactamase_homologue_nonfloor_bootstrap"
+ABOVE_MINIMUM_BOOTSTRAP_SEEDS = {
+    "NDM-1_to_VIM-2": 2170354257516925701,
+    "VIM-2_to_NDM-1": 6550956855475596474,
+}
 DIRECTIONS = (
     "NDM-1_to_VIM-2",
     "VIM-2_to_NDM-1",
@@ -430,7 +433,7 @@ def _resample_positions(
     )
 
 
-def _nonfloor_paired_bootstrap(
+def _above_minimum_paired_bootstrap(
     frame: pd.DataFrame,
     *,
     replicates: int,
@@ -446,7 +449,7 @@ def _nonfloor_paired_bootstrap(
         frame["substitution_mean_prediction"].to_numpy(dtype=float),
     )
 
-    rng = np.random.default_rng(_numeric_seed(f"{NONFLOOR_BOOTSTRAP_SEED}|{direction}"))
+    rng = np.random.default_rng(ABOVE_MINIMUM_BOOTSTRAP_SEEDS[direction])
 
     replicate_values = {metric: [] for metric in METRICS}
 
@@ -483,7 +486,7 @@ def _nonfloor_paired_bootstrap(
         rows.append(
             {
                 "direction": direction,
-                "population": "neither_at_floor",
+                "population": "both_above_minimum",
                 "direct_baseline_id": "direct_homologue_source_effect",
                 "comparator_baseline_id": PRIMARY_COMPARATOR,
                 "metric": metric,
@@ -510,7 +513,7 @@ def _nonfloor_paired_bootstrap(
     return pd.DataFrame(rows)
 
 
-def _prepare_nonfloor_analysis(
+def _prepare_above_minimum_analysis(
     matched_pairs: pd.DataFrame,
     *,
     bootstrap_replicates: int = BOOTSTRAP_REPLICATES,
@@ -526,26 +529,26 @@ def _prepare_nonfloor_analysis(
             f"Expected 3026 directional matched-pair rows; found {len(matched_pairs)}"
         )
 
-    nonfloor = matched_pairs.loc[
-        matched_pairs["floor_class"].eq("neither_at_floor")
+    above_minimum = matched_pairs.loc[
+        matched_pairs["minimum_score_class"].eq("both_above_minimum")
     ].copy()
 
     metric_rows = []
     comparison_tables = []
 
     for direction in DIRECTIONS:
-        group = nonfloor.loc[nonfloor["direction"].eq(direction)].copy()
+        group = above_minimum.loc[above_minimum["direction"].eq(direction)].copy()
 
         if len(group) != 478:
             raise HomologueBaselineAnalysisError(
-                f"{direction}: expected 478 non-floor pairs; found {len(group)}"
+                f"{direction}: expected 478 above-minimum pairs; found {len(group)}"
             )
 
         position_count = group["homologue_position_id"].nunique()
 
         if position_count != 63:
             raise HomologueBaselineAnalysisError(
-                f"{direction}: expected 63 non-floor homologue "
+                f"{direction}: expected 63 above-minimum homologue "
                 f"positions; found {position_count}"
             )
 
@@ -564,7 +567,7 @@ def _prepare_nonfloor_analysis(
                 metric_rows.append(
                     {
                         "direction": direction,
-                        "population": "neither_at_floor",
+                        "population": "both_above_minimum",
                         "baseline_id": baseline_id,
                         "metric": metric,
                         "point_estimate": value,
@@ -574,7 +577,7 @@ def _prepare_nonfloor_analysis(
                 )
 
         comparison_tables.append(
-            _nonfloor_paired_bootstrap(
+            _above_minimum_paired_bootstrap(
                 group,
                 replicates=bootstrap_replicates,
             )
@@ -591,28 +594,28 @@ def _prepare_nonfloor_analysis(
     ].copy()
 
     discordant = unique_pairs.loc[
-        unique_pairs["floor_class"].isin(
+        unique_pairs["minimum_score_class"].isin(
             {
-                "source_only_at_floor",
-                "target_only_at_floor",
+                "source_at_minimum",
+                "target_at_minimum",
             }
         )
     ].copy()
 
     if len(discordant) != 306:
         raise HomologueBaselineAnalysisError(
-            f"Expected 306 discordant floor pairs; found {len(discordant)}"
+            f"Expected 306 discordant minimum-score pairs; found {len(discordant)}"
         )
 
-    discordant["floor_switch_direction"] = np.where(
-        discordant["floor_class"].eq("source_only_at_floor"),
-        "NDM_floor_VIM_nonfloor",
-        "NDM_nonfloor_VIM_floor",
+    discordant["minimum_score_switch_direction"] = np.where(
+        discordant["minimum_score_class"].eq("source_at_minimum"),
+        "NDM_at_minimum_VIM_above_minimum",
+        "NDM_above_minimum_VIM_at_minimum",
     )
 
     discordant_summary = (
         discordant.groupby(
-            "floor_switch_direction",
+            "minimum_score_switch_direction",
             as_index=False,
         )
         .agg(
@@ -622,38 +625,38 @@ def _prepare_nonfloor_analysis(
                 "nunique",
             ),
         )
-        .sort_values("floor_switch_direction")
+        .sort_values("minimum_score_switch_direction")
         .reset_index(drop=True)
     )
 
     switch_counts = dict(
         zip(
-            discordant_summary["floor_switch_direction"],
+            discordant_summary["minimum_score_switch_direction"],
             discordant_summary["n_pairs"],
         )
     )
 
-    if switch_counts.get("NDM_floor_VIM_nonfloor") != 118:
+    if switch_counts.get("NDM_at_minimum_VIM_above_minimum") != 118:
         raise HomologueBaselineAnalysisError(
-            "Expected 118 NDM-floor/VIM-nonfloor substitutions"
+            "Expected 118 NDM-at-minimum/VIM-above-minimum substitutions"
         )
 
-    if switch_counts.get("NDM_nonfloor_VIM_floor") != 188:
+    if switch_counts.get("NDM_above_minimum_VIM_at_minimum") != 188:
         raise HomologueBaselineAnalysisError(
-            "Expected 188 NDM-nonfloor/VIM-floor substitutions"
+            "Expected 188 NDM-above-minimum/VIM-at-minimum substitutions"
         )
 
     summary = {
-        "nonfloor_population": "neither_at_floor",
-        "nonfloor_pair_count_per_direction": 478,
-        "nonfloor_homologue_position_count": 63,
-        "nonfloor_primary_comparator": PRIMARY_COMPARATOR,
-        "nonfloor_bootstrap_replicates": bootstrap_replicates,
-        "nonfloor_bootstrap_seed": NONFLOOR_BOOTSTRAP_SEED,
-        "nonfloor_resampling_unit": "homologue_position_id",
-        "discordant_floor_pair_count": len(discordant),
-        "ndm_floor_vim_nonfloor_pair_count": 118,
-        "ndm_nonfloor_vim_floor_pair_count": 188,
+        "above_minimum_population": "both_above_minimum",
+        "above_minimum_pair_count_per_direction": 478,
+        "above_minimum_homologue_position_count": 63,
+        "above_minimum_reference_comparator": PRIMARY_COMPARATOR,
+        "above_minimum_bootstrap_replicates": bootstrap_replicates,
+        "above_minimum_bootstrap_seeds": ABOVE_MINIMUM_BOOTSTRAP_SEEDS,
+        "above_minimum_resampling_unit": "homologue_position_id",
+        "discordant_minimum_score_pair_count": len(discordant),
+        "ndm_at_minimum_vim_above_minimum_pair_count": 118,
+        "ndm_above_minimum_vim_at_minimum_pair_count": 188,
     }
 
     return (
@@ -706,7 +709,7 @@ def run_homologue_baseline_analysis(
 
     floor_counts = (
         matched_pairs.groupby(
-            ["direction", "floor_class"],
+            ["direction", "minimum_score_class"],
             observed=True,
         )
         .agg(
@@ -720,12 +723,12 @@ def run_homologue_baseline_analysis(
     )
 
     (
-        nonfloor_metrics,
-        nonfloor_comparisons,
+        above_minimum_metrics,
+        above_minimum_comparisons,
         discordant,
         discordant_summary,
-        nonfloor_summary,
-    ) = _prepare_nonfloor_analysis(matched_pairs)
+        above_minimum_summary,
+    ) = _prepare_above_minimum_analysis(matched_pairs)
 
     output_dir = baseline_dir / "homologue_analysis"
     output_dir.mkdir(
@@ -747,32 +750,28 @@ def run_homologue_baseline_analysis(
     )
     _write_csv(
         sensitivity,
-        output_dir / "homologue_floor_sensitivity.csv",
+        output_dir / "homologue_minimum_score_sensitivity.csv",
     )
     _write_csv(
         floor_counts,
-        output_dir / "homologue_floor_counts.csv",
+        output_dir / "homologue_minimum_score_counts.csv",
     )
     _write_csv(
-        nonfloor_metrics,
-        output_dir / "nonfloor_matched_metrics.csv",
+        above_minimum_metrics,
+        output_dir / "above_minimum_matched_metrics.csv",
     )
     _write_csv(
-        nonfloor_comparisons,
-        output_dir / "nonfloor_paired_comparisons.csv",
+        above_minimum_comparisons,
+        output_dir / "above_minimum_paired_comparisons.csv",
     )
     _write_csv(
         discordant,
-        output_dir / "discordant_floor_pairs.csv",
+        output_dir / "discordant_minimum_score_pairs.csv",
     )
     _write_csv(
         discordant_summary,
-        output_dir / "discordant_floor_summary.csv",
+        output_dir / "discordant_minimum_score_summary.csv",
     )
-
-    obsolete_summary = output_dir / "homologue_nonfloor_analysis_summary.json"
-    if obsolete_summary.exists():
-        obsolete_summary.unlink()
 
     summary = {
         "status": "PASS",
@@ -785,17 +784,17 @@ def run_homologue_baseline_analysis(
         "homologue_position_count": 81,
         "score_analysis_remains_primary": True,
         "score_original_role": "sensitivity_analysis_only",
-        **nonfloor_summary,
+        **above_minimum_summary,
         "outputs": [
             "matched_homologue_predictions.csv",
             "matched_homologue_metrics.csv",
             "paired_baseline_comparisons.csv",
-            "homologue_floor_sensitivity.csv",
-            "homologue_floor_counts.csv",
-            "nonfloor_matched_metrics.csv",
-            "nonfloor_paired_comparisons.csv",
-            "discordant_floor_pairs.csv",
-            "discordant_floor_summary.csv",
+            "homologue_minimum_score_sensitivity.csv",
+            "homologue_minimum_score_counts.csv",
+            "above_minimum_matched_metrics.csv",
+            "above_minimum_paired_comparisons.csv",
+            "discordant_minimum_score_pairs.csv",
+            "discordant_minimum_score_summary.csv",
             "homologue_analysis_summary.json",
         ],
     }

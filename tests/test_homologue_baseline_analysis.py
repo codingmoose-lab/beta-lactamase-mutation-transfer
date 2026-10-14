@@ -6,21 +6,21 @@ import numpy as np
 import pandas as pd
 
 from betalactamase_transfer.homologue_baseline_analysis import (
-    _floor_class,
     _metric_difference,
     _metric_values,
+    _minimum_score_class,
 )
 
 
-def test_floor_class_separates_all_four_states() -> None:
+def test_minimum_score_class_separates_all_four_states() -> None:
     source = pd.Series([-4.0, -4.0, -1.0, -1.0])
     target = pd.Series([-4.0, -1.0, -4.0, -1.0])
 
-    assert _floor_class(source, target).tolist() == [
-        "both_at_floor",
-        "source_only_at_floor",
-        "target_only_at_floor",
-        "neither_at_floor",
+    assert _minimum_score_class(source, target).tolist() == [
+        "both_at_minimum",
+        "source_at_minimum",
+        "target_at_minimum",
+        "both_above_minimum",
     ]
 
 
