@@ -23,10 +23,10 @@ def main() -> None:
         )
     )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
-    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--validate-inputs", action="store_true")
     args = parser.parse_args()
 
-    if args.check_only:
+    if args.validate_inputs:
         summary = model_difference_analysis.inspect_biological_model_difference_inputs(
             args.repo_root
         )

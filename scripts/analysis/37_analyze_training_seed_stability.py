@@ -13,7 +13,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from betalactamase_transfer import training_seed_stability as stage37  # noqa: E402
+from betalactamase_transfer import training_seed_stability as seed_eval  # noqa: E402
 
 
 def main() -> None:
@@ -25,21 +25,23 @@ def main() -> None:
     )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
-    parser.add_argument("--batch-size", type=int, default=stage37.stage32.BATCH_SIZE)
-    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument(
+        "--batch-size", type=int, default=seed_eval.graph_eval.BATCH_SIZE
+    )
+    parser.add_argument("--validate-inputs", action="store_true")
     parser.add_argument("--postprocess-only", action="store_true")
     args = parser.parse_args()
 
-    if args.check_only and args.postprocess_only:
-        parser.error("--check-only and --postprocess-only cannot be used together")
+    if args.validate_inputs and args.postprocess_only:
+        parser.error("--validate-inputs and --postprocess-only cannot be used together")
 
-    if args.check_only:
-        summary = stage37.inspect_training_seed_stability_inputs(args.repo_root)
+    if args.validate_inputs:
+        summary = seed_eval.inspect_training_seed_stability_inputs(args.repo_root)
         print("TRAINING-SEED STABILITY INPUT REVIEW PASSED")
         print(json.dumps(summary, indent=2))
         return
 
-    summary = stage37.run_training_seed_stability(
+    summary = seed_eval.run_training_seed_stability(
         args.repo_root,
         device_name=args.device,
         batch_size=args.batch_size,

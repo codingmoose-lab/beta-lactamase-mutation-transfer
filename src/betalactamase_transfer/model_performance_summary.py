@@ -371,7 +371,7 @@ def _deduplicate_metrics(
         )
         .drop_duplicates(
             keys,
-            keep="last",
+            keep="first",
         )
         .drop(columns="_source_order")
         .reset_index(drop=True)
@@ -656,7 +656,7 @@ def _biological_counts(
         ]
     )
 
-    frame["interpretation_scope"] = "descriptive_not_causal"
+    frame["interpretation_scope"] = "descriptive_association"
 
     expected = {
         "structural_associations": 125,
@@ -717,6 +717,26 @@ def inspect_model_performance_summary_inputs(
     if set(scheme_counts) != set(CORE_SCHEME_IDS):
         raise ModelPerformanceSummaryError("Central evaluation scheme coverage changed")
 
+    expected_model_sources = {
+        "experimental_structure_descriptor_ridge": "experimental_structure",
+        "residue_graph_neural_regressor": "residue_graph",
+        "egnn_residue_regressor": "residue_geometry",
+        "atomic_local_voxel_cnn": "atomic_local_structure",
+    }
+
+    for model_id, expected_source in expected_model_sources.items():
+        observed_sources = set(
+            final_metrics.loc[
+                final_metrics["model_id"].astype(str).eq(model_id),
+                "source_result",
+            ].astype(str)
+        )
+        if observed_sources and observed_sources != {expected_source}:
+            raise ModelPerformanceSummaryError(
+                f"{model_id} source-result assignment changed: "
+                f"{sorted(observed_sources)}"
+            )
+
     return {
         "status": "PASS",
         "analysis_scope": "completed_model_performance_summary",
@@ -731,6 +751,7 @@ def inspect_model_performance_summary_inputs(
         "evaluation_population_count": int(
             final_metrics["evaluation_population"].nunique()
         ),
+        "model_source_assignments_checked": True,
         "evaluation_populations": sorted(
             final_metrics["evaluation_population"].astype(str).unique().tolist()
         ),
@@ -744,7 +765,7 @@ def inspect_model_performance_summary_inputs(
         ),
         "biological_summary_row_count": int(len(biology)),
         "training_seed_direction_change_count": int(len(seed_changes)),
-        "causal_interpretation_permitted": False,
+        "biological_interpretation_scope": "descriptive_association_only",
     }
 
 

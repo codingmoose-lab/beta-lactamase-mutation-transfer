@@ -272,7 +272,7 @@ def acquire_alphafold_models(
     fetch_bytes: FetchBytes = _default_fetch_bytes,
     retrieved_at: str | None = None,
 ) -> Mapping[str, object]:
-    """Acquire exact AlphaFold DB model files and record their provenance."""
+    """Acquire exact AlphaFold DB model files and record their source metadata."""
     if timeout <= 0:
         raise AlphaFoldAcquisitionError("Timeout must be a positive integer")
     normalized_accessions = tuple(

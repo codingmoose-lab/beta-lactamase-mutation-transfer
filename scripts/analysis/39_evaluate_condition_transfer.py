@@ -18,11 +18,11 @@ def main() -> None:
         )
     )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
-    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--validate-inputs", action="store_true")
     args = parser.parse_args()
 
     repo_root = args.repo_root.resolve()
-    if args.check_only:
+    if args.validate_inputs:
         result = review_condition_transfer_inputs(repo_root)
         print("CONDITION TRANSFER INPUT REVIEW PASSED")
     else:

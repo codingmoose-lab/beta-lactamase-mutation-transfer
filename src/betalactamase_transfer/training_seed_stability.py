@@ -12,9 +12,11 @@ import numpy as np
 import pandas as pd
 import torch
 
-from betalactamase_transfer import residue_geometry_neural_evaluation as stage33
-from betalactamase_transfer import residue_graph_neural_evaluation as stage32
-from betalactamase_transfer import sequence_residue_graph_neural_evaluation as stage34
+from betalactamase_transfer import residue_geometry_neural_evaluation as geometry_eval
+from betalactamase_transfer import residue_graph_neural_evaluation as graph_eval
+from betalactamase_transfer import (
+    sequence_residue_graph_neural_evaluation as sequence_residue_graph_eval,
+)
 
 
 class TrainingSeedStabilityError(RuntimeError):
@@ -40,10 +42,10 @@ GRAPH_SEEDS = tuple(range(32101, 32101 + TOTAL_SEED_COUNT))
 GEOMETRY_SEEDS = tuple(range(33101, 33101 + TOTAL_SEED_COUNT))
 JOINT_SEEDS = GRAPH_SEEDS
 
-MODEL_CENTRE = stage32.CENTRE_MODEL
-MODEL_GRAPH = stage32.GRAPH_MODEL
-MODEL_GEOMETRY = stage33.MODEL_ID
-MODEL_JOINT = stage34.MODEL_ID
+MODEL_CENTRE = graph_eval.CENTRE_MODEL
+MODEL_GRAPH = graph_eval.GRAPH_MODEL
+MODEL_GEOMETRY = geometry_eval.MODEL_ID
+MODEL_JOINT = sequence_residue_graph_eval.MODEL_ID
 MODEL_IDS = (MODEL_CENTRE, MODEL_GRAPH, MODEL_GEOMETRY, MODEL_JOINT)
 
 SEEDS_BY_MODEL = {
@@ -53,10 +55,10 @@ SEEDS_BY_MODEL = {
     MODEL_JOINT: JOINT_SEEDS,
 }
 
-CORE_SCHEME_IDS = tuple(stage32.CORE_SCHEME_IDS)
-TARGET_COLUMN = stage32.TARGET_COLUMN
-COMPARISON_KEY = tuple(stage32.COMPARISON_KEY)
-MATCHED_FIELDS = tuple(stage32.MATCHED_FIELDS)
+CORE_SCHEME_IDS = tuple(graph_eval.CORE_SCHEME_IDS)
+TARGET_COLUMN = graph_eval.TARGET_COLUMN
+COMPARISON_KEY = tuple(graph_eval.COMPARISON_KEY)
+MATCHED_FIELDS = tuple(graph_eval.MATCHED_FIELDS)
 
 PRIMARY_COMPARISONS = (
     (MODEL_GRAPH, MODEL_CENTRE, "matched_training_seed"),
@@ -84,10 +86,10 @@ SOURCE_HASHES = {
         "b66d1c2873f0ae6d62aa3ddfddc24e4a6f761fc9dc9d8f8edf8d521d509e3154"
     ),
     "src/betalactamase_transfer/residue_geometry_neural_evaluation.py": (
-        "ead8c636124906c443c22db9e3b894ec10fccb1c62bdcd89f2274988fdac90a3"
+        "b7aae8bf6fae602223a6a554523e29f8ec532a5d2781b8561310b2e55b106f11"
     ),
     "src/betalactamase_transfer/sequence_residue_graph_neural_evaluation.py": (
-        "b408ea90b696ccfd6e84d779018681c27556fec6f1d86e51945d0a50d80d1edf"
+        "d8ecdb1889430439aa4ab2234e57055900632d31f2b6cf982f893894d0aedb42"
     ),
 }
 
@@ -127,7 +129,7 @@ RESULT_HASHES = {
     (
         "data/interim/biological_model_difference_analysis/"
         "biological_model_difference_summary.json"
-    ): ("81323e6852c4ab4f19dbe4052955cb766864319d8ce2ccb36af7aef5b4868fc6"),
+    ): ("b0cd9af9e77344123dee2c537b7ae6a054ed9bdaa427ed30f11b0af4df6f98cf"),
 }
 
 
@@ -174,7 +176,7 @@ def _write_json(value: Mapping[str, object], path: Path) -> None:
 
 
 def _metric_values(y_true: np.ndarray, y_pred: np.ndarray) -> Mapping[str, float]:
-    return stage32._metric_values(y_true, y_pred)
+    return graph_eval._metric_values(y_true, y_pred)
 
 
 def _metric_difference(metric: str, value_a: float, value_b: float) -> float:
@@ -197,7 +199,7 @@ def _seed_plan() -> pd.DataFrame:
                     "training_seed": seed,
                     "record_source": "existing_stage_record"
                     if index <= EXISTING_SEED_COUNT
-                    else "stage37_additional_fit",
+                    else "seed_eval_additional_fit",
                 }
             )
     return pd.DataFrame(rows)
@@ -413,7 +415,7 @@ def _prediction_frame(
     frame["model_id"] = model_id
     frame["seed_set_index"] = int(seed_set_index)
     frame["training_seed"] = int(training_seed)
-    frame["record_source"] = "stage37_additional_fit"
+    frame["record_source"] = "seed_eval_additional_fit"
     frame["y_pred"] = np.asarray(prediction, dtype=float)
     return frame[[*PREDICTION_COLUMNS]]
 
@@ -517,14 +519,14 @@ def _fit_one_seed(
     fitting_rows, ordered_test = _context_fitting_and_test(context)
     scheme_id = str(context["scheme_id"])
     iteration = str(context["evaluation_iteration"])
-    condition_mode = stage32.CONDITION_MODE_BY_SCHEME[scheme_id]
+    condition_mode = graph_eval.CONDITION_MODE_BY_SCHEME[scheme_id]
     description = (
         f"{scheme_id} {iteration} {model_id} training seed "
         f"{seed_set_index}/{TOTAL_SEED_COUNT}"
     )
 
     if model_id in {MODEL_CENTRE, MODEL_GRAPH}:
-        prediction, history = stage32._fit_fixed_epochs_and_predict(
+        prediction, history = graph_eval._fit_fixed_epochs_and_predict(
             model_id,
             fitting_rows,
             ordered_test,
@@ -539,7 +541,7 @@ def _fit_one_seed(
             batch_size,
         )
     elif model_id == MODEL_GEOMETRY:
-        prediction, history = stage33._fit_fixed_epochs_and_predict(
+        prediction, history = geometry_eval._fit_fixed_epochs_and_predict(
             fitting_rows,
             ordered_test,
             tables["nodes"],
@@ -556,7 +558,7 @@ def _fit_one_seed(
         if embedding_data is None:
             raise TrainingSeedStabilityError("Sequence embedding data are unavailable")
         embedding_index, mutant_embeddings, wild_type_embeddings = embedding_data
-        prediction, history = stage34._fit_fixed_epochs_and_predict(
+        prediction, history = sequence_residue_graph_eval._fit_fixed_epochs_and_predict(
             fitting_rows,
             ordered_test,
             tables,
@@ -650,19 +652,26 @@ def _combine_checkpoint_files(output_dir: Path) -> tuple[Path, Path]:
                     wrote_header = True
                 shutil.copyfileobj(source, destination)
 
-    with history_temp.open("w", encoding="utf-8", newline="") as destination:
-        wrote_header = False
-        for source_path in history_files:
-            with source_path.open("r", encoding="utf-8", newline="") as source:
-                header = source.readline()
-                if not header:
-                    raise TrainingSeedStabilityError(
-                        f"Seed history checkpoint is empty: {source_path.name}"
-                    )
-                if not wrote_header:
-                    destination.write(header)
-                    wrote_header = True
-                shutil.copyfileobj(source, destination)
+    history_frames: list[pd.DataFrame] = []
+    for source_path in history_files:
+        frame = pd.read_csv(source_path, low_memory=False)
+        if frame.empty:
+            raise TrainingSeedStabilityError(
+                f"Seed history checkpoint is empty: {source_path.name}"
+            )
+        history_frames.append(frame)
+    history_columns = list(
+        dict.fromkeys(
+            column for frame in history_frames for column in frame.columns.tolist()
+        )
+    )
+    combined_history = pd.concat(
+        [frame.reindex(columns=history_columns) for frame in history_frames],
+        ignore_index=True,
+    )
+    combined_history.to_csv(
+        history_temp, index=False, lineterminator="\n", quoting=csv.QUOTE_MINIMAL
+    )
 
     prediction_temp.replace(prediction_path)
     history_temp.replace(history_path)
@@ -688,7 +697,7 @@ def _fit_additional_seeds(
     if saved is not None:
         return saved
 
-    embedding_data = stage34._load_embedding_data(repo_root)
+    embedding_data = sequence_residue_graph_eval._load_embedding_data(repo_root)
     for model_id in MODEL_IDS:
         seeds = SEEDS_BY_MODEL[model_id]
         for context in contexts:
@@ -980,16 +989,25 @@ def _comparison_summary(comparisons: pd.DataFrame) -> pd.DataFrame:
 def inspect_training_seed_stability_inputs(repo_root: Path) -> Mapping[str, object]:
     repo_root = repo_root.resolve()
     _verify_hashes(repo_root)
-    if tuple(stage32.FINAL_REPEAT_SEEDS) != GRAPH_SEEDS[:EXISTING_SEED_COUNT]:
-        raise TrainingSeedStabilityError("Stage-32 existing training seeds differ")
-    if tuple(stage33.FINAL_REPEAT_SEEDS) != GEOMETRY_SEEDS[:EXISTING_SEED_COUNT]:
-        raise TrainingSeedStabilityError("Stage-33 existing training seeds differ")
-    if tuple(stage34.FINAL_REPEAT_SEEDS) != JOINT_SEEDS[:EXISTING_SEED_COUNT]:
-        raise TrainingSeedStabilityError("Stage-34 existing training seeds differ")
+    if tuple(graph_eval.FINAL_REPEAT_SEEDS) != GRAPH_SEEDS[:EXISTING_SEED_COUNT]:
+        raise TrainingSeedStabilityError(
+            "Residue-graph neural analysis existing training seeds differ"
+        )
+    if tuple(geometry_eval.FINAL_REPEAT_SEEDS) != GEOMETRY_SEEDS[:EXISTING_SEED_COUNT]:
+        raise TrainingSeedStabilityError(
+            "Residue-geometry neural analysis existing training seeds differ"
+        )
+    if (
+        tuple(sequence_residue_graph_eval.FINAL_REPEAT_SEEDS)
+        != JOINT_SEEDS[:EXISTING_SEED_COUNT]
+    ):
+        raise TrainingSeedStabilityError(
+            "Sequence-plus-residue-graph analysis existing training seeds differ"
+        )
 
-    tables = stage32._load_tables(repo_root)
-    observations = stage32._build_analysis_observations(tables)
-    contexts = stage32._make_contexts(tables, observations)
+    tables = graph_eval._load_tables(repo_root)
+    observations = graph_eval._build_analysis_observations(tables)
+    contexts = graph_eval._make_contexts(tables, observations)
     if len(contexts) != EXPECTED_CONTEXT_COUNT:
         raise TrainingSeedStabilityError(
             f"Expected {EXPECTED_CONTEXT_COUNT} contexts, observed {len(contexts)}"
@@ -1000,15 +1018,17 @@ def inspect_training_seed_stability_inputs(repo_root: Path) -> Mapping[str, obje
         frame = _normalise_existing_seed_predictions(repo_root, model_id)
         existing_counts[model_id] = len(frame)
 
-    stage36_summary = json.loads(
+    model_difference_eval_summary = json.loads(
         (
             repo_root
             / "data/interim/biological_model_difference_analysis"
             / "biological_model_difference_summary.json"
         ).read_text(encoding="utf-8")
     )
-    if stage36_summary.get("status") != "PASS":
-        raise TrainingSeedStabilityError("Stage-36 summary does not report PASS")
+    if model_difference_eval_summary.get("status") != "PASS":
+        raise TrainingSeedStabilityError(
+            "Biological model-difference analysis summary does not report PASS"
+        )
 
     output_dir = repo_root / "data/interim" / OUTPUT_DIR_NAME
     return {
@@ -1097,23 +1117,23 @@ def run_training_seed_stability(
     repo_root: Path,
     *,
     device_name: str = "cuda",
-    batch_size: int = stage32.BATCH_SIZE,
+    batch_size: int = graph_eval.BATCH_SIZE,
     postprocess_only: bool = False,
 ) -> Mapping[str, object]:
     repo_root = repo_root.resolve()
     if batch_size < 1:
         raise TrainingSeedStabilityError("Batch size must be positive")
     inspect_training_seed_stability_inputs(repo_root)
-    stage32._configure_deterministic_execution()
+    graph_eval._configure_deterministic_execution()
     if device_name == "cuda" and not torch.cuda.is_available():
         raise TrainingSeedStabilityError("CUDA is not available")
     device = torch.device(device_name)
 
     output_dir = repo_root / "data/interim" / OUTPUT_DIR_NAME
     output_dir.mkdir(parents=True, exist_ok=True)
-    tables = stage32._load_tables(repo_root)
-    observations = stage32._build_analysis_observations(tables)
-    contexts = stage32._make_contexts(tables, observations)
+    tables = graph_eval._load_tables(repo_root)
+    observations = graph_eval._build_analysis_observations(tables)
+    contexts = graph_eval._make_contexts(tables, observations)
     selected_epochs = _selected_epoch_contract(repo_root)
 
     if postprocess_only:

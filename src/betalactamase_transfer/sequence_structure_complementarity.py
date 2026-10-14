@@ -34,13 +34,13 @@ TARGET_ABSOLUTE_TOLERANCE = graph_stage.TARGET_ABSOLUTE_TOLERANCE
 
 SOURCE_GUARDS = {
     "src/betalactamase_transfer/sequence_plm_evaluation.py": (
-        "8a560c68be57fbb3ff6e63a551608723802fc05e83dd243d6988e030b4351d3b"
+        "c3365bb99f7fbbc83e30807dd107f4d06c91fa0662f1bd3f60cba8b298eaf69f"
     ),
     "src/betalactamase_transfer/residue_graph_neural_evaluation.py": (
         "b66d1c2873f0ae6d62aa3ddfddc24e4a6f761fc9dc9d8f8edf8d521d509e3154"
     ),
     "src/betalactamase_transfer/sequence_residue_graph_neural_evaluation.py": (
-        "b408ea90b696ccfd6e84d779018681c27556fec6f1d86e51945d0a50d80d1edf"
+        "d8ecdb1889430439aa4ab2234e57055900632d31f2b6cf982f893894d0aedb42"
     ),
 }
 RESULT_GUARDS = {
@@ -593,7 +593,7 @@ def inspect_sequence_structure_complementarity_inputs(
     return {
         "status": "PASS",
         "analysis_scope": "sequence_structure_predictive_complementarity",
-        "analysis_role": "secondary_analysis_motivated_by_stage34_results",
+        "analysis_role": "secondary_sequence_structure_analysis",
         "model_id": MODEL_ID,
         "candidate_graph_weights": list(GRAPH_WEIGHTS),
         "selection_measure": "validation_mae",
@@ -850,9 +850,9 @@ def run_sequence_structure_complementarity(
         "final_evaluation_labels_used_for_weight_selection": False,
         "cross_protein_target_labels_used_for_weight_selection": False,
         "diagnostic_oracle_used_for_model_selection": False,
-        "existing_stage25_predictions_changed": False,
-        "existing_stage32_predictions_changed": False,
-        "existing_stage34_predictions_changed": False,
+        "existing_sequence_predictions_changed": False,
+        "existing_graph_eval_predictions_changed": False,
+        "existing_sequence_residue_graph_eval_predictions_changed": False,
         "outputs": [
             "sequence_structure_validation_predictions.csv",
             "sequence_structure_model_selection.csv",

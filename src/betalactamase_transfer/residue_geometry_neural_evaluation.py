@@ -16,7 +16,7 @@ from torch import nn
 from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
 
-import betalactamase_transfer.residue_graph_neural_evaluation as stage32
+import betalactamase_transfer.residue_graph_neural_evaluation as graph_eval
 
 
 class ResidueGeometryNeuralEvaluationError(RuntimeError):
@@ -36,8 +36,8 @@ COMPARATOR_MODEL_IDS = (
     STAGE32_CENTRE_MODEL_ID,
     *REFERENCE_MODEL_IDS,
 )
-CORE_SCHEME_IDS = tuple(stage32.CORE_SCHEME_IDS)
-TARGET_COLUMN = stage32.TARGET_COLUMN
+CORE_SCHEME_IDS = tuple(graph_eval.CORE_SCHEME_IDS)
+TARGET_COLUMN = graph_eval.TARGET_COLUMN
 
 HIDDEN_WIDTH = 128
 GEOMETRY_LAYER_COUNT = 2
@@ -128,8 +128,8 @@ def _checkpoint_contract(
         "batch_size": batch_size,
         "selection_seed": SELECTION_SEED,
         "final_repeat_seeds": list(FINAL_REPEAT_SEEDS[:repeats]),
-        "stage33_source_sha256": _sha256(Path(__file__)),
-        "stage32_output_sha256": dict(STAGE32_OUTPUT_HASHES),
+        "geometry_eval_source_sha256": _sha256(Path(__file__)),
+        "graph_eval_output_sha256": dict(STAGE32_OUTPUT_HASHES),
         "device": str(device),
         "gpu_name": (
             torch.cuda.get_device_name(device) if device.type == "cuda" else ""
@@ -150,8 +150,8 @@ def _prepare_checkpoint_directory(
         recorded = json.loads(contract_path.read_text(encoding="utf-8"))
         if recorded != dict(contract):
             raise ResidueGeometryNeuralEvaluationError(
-                "Existing Stage-33 checkpoints were produced under a different "
-                "execution contract"
+                "Existing residue-geometry neural analysis checkpoints were produced "
+                "under a different execution contract"
             )
     else:
         _write_json(contract, contract_path)
@@ -411,7 +411,7 @@ class EGNNResidueRegressor(nn.Module):
                 for _ in range(GEOMETRY_LAYER_COUNT)
             ]
         )
-        readout_dim = HIDDEN_WIDTH + len(stage32.SUBSTITUTIONS) + condition_dim
+        readout_dim = HIDDEN_WIDTH + len(graph_eval.SUBSTITUTIONS) + condition_dim
         self.readout = nn.Sequential(
             nn.Linear(readout_dim, HIDDEN_WIDTH),
             nn.ReLU(),
@@ -445,7 +445,7 @@ class EGNNResidueRegressor(nn.Module):
         return self.readout(combined).squeeze(1)
 
 
-def _required_stage32_symbols() -> tuple[str, ...]:
+def _required_graph_eval_symbols() -> tuple[str, ...]:
     return (
         "_load_tables",
         "_build_analysis_observations",
@@ -463,28 +463,29 @@ def _required_stage32_symbols() -> tuple[str, ...]:
     )
 
 
-def _verify_stage32_module() -> None:
+def _verify_graph_eval_module() -> None:
     missing = [
-        name for name in _required_stage32_symbols() if not hasattr(stage32, name)
+        name for name in _required_graph_eval_symbols() if not hasattr(graph_eval, name)
     ]
     if missing:
         raise ResidueGeometryNeuralEvaluationError(
-            "Stage-32 module does not provide required functions: " + ", ".join(missing)
+            "residue-graph neural analysis module does not provide required "
+            "functions: " + ", ".join(missing)
         )
 
 
-def _verify_stage32_outputs(repo_root: Path) -> None:
+def _verify_graph_eval_outputs(repo_root: Path) -> None:
     directory = repo_root / "data/interim/residue_graph_neural_evaluation"
     for filename, expected_hash in STAGE32_OUTPUT_HASHES.items():
         path = directory / filename
         if not path.is_file():
             raise ResidueGeometryNeuralEvaluationError(
-                f"Required Stage-32 result is absent: {path}"
+                f"Required residue-graph neural analysis result is absent: {path}"
             )
         observed_hash = _sha256(path)
         if observed_hash != expected_hash:
             raise ResidueGeometryNeuralEvaluationError(
-                f"Stage-32 result identity changed: {filename}"
+                f"Residue-graph neural analysis result identity changed: {filename}"
             )
 
 
@@ -507,7 +508,8 @@ def _coordinate_tensor(
     for key in node_lookup:
         if not isinstance(key, tuple) or len(key) != 2:
             raise ResidueGeometryNeuralEvaluationError(
-                "Stage-32 node lookup does not use protein/position keys"
+                "Residue-graph neural analysis node lookup does not use "
+                "protein/position keys"
             )
         lookup_keys.add((str(key[0]), int(key[1])))
 
@@ -533,7 +535,8 @@ def _coordinate_tensor(
 
     if len(matching_columns) != 1:
         raise ResidueGeometryNeuralEvaluationError(
-            "Could not match one graph-node position column to the Stage-32 node lookup"
+            "Could not match one graph-node position column to the residue-graph "
+            "neural analysis node lookup"
         )
     position_column = matching_columns[0]
 
@@ -574,7 +577,7 @@ def _predict_standardised(
     device: torch.device,
     batch_size: int,
 ) -> np.ndarray:
-    loader = stage32._loader(arrays, batch_size, shuffle=False)
+    loader = graph_eval._loader(arrays, batch_size, shuffle=False)
     result = []
     model.eval()
     with torch.no_grad():
@@ -607,16 +610,18 @@ def _fit_with_validation(
     batch_size: int,
 ) -> tuple[int, float, list[Mapping[str, object]]]:
     _set_seed(seed)
-    condition_transform = stage32._fit_condition_transform(fitting_rows, condition_mode)
-    target_mean, target_sd = stage32._target_transform(fitting_rows)
-    node_features, edge_index, edge_features, node_lookup = stage32._graph_tensors(
+    condition_transform = graph_eval._fit_condition_transform(
+        fitting_rows, condition_mode
+    )
+    target_mean, target_sd = graph_eval._target_transform(fitting_rows)
+    node_features, edge_index, edge_features, node_lookup = graph_eval._graph_tensors(
         nodes, edges, residue_features, fitting_rows, device
     )
     coordinates = _coordinate_tensor(nodes, node_lookup, device)
-    fitting_arrays = stage32._prepare_observation_arrays(
+    fitting_arrays = graph_eval._prepare_observation_arrays(
         fitting_rows, node_lookup, condition_transform, target_mean, target_sd
     )
-    validation_arrays = stage32._prepare_observation_arrays(
+    validation_arrays = graph_eval._prepare_observation_arrays(
         validation_rows, node_lookup, condition_transform, target_mean, target_sd
     )
     model = _model(
@@ -629,7 +634,7 @@ def _fit_with_validation(
         model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
     )
     loss_function = nn.MSELoss()
-    training_loader = stage32._loader(fitting_arrays, batch_size, shuffle=True)
+    training_loader = graph_eval._loader(fitting_arrays, batch_size, shuffle=True)
 
     best_epoch = 0
     best_validation_mae = float("inf")
@@ -724,16 +729,18 @@ def _fit_fixed_epochs_and_predict(
     batch_size: int,
 ) -> tuple[np.ndarray, list[Mapping[str, object]]]:
     _set_seed(seed)
-    condition_transform = stage32._fit_condition_transform(fitting_rows, condition_mode)
-    target_mean, target_sd = stage32._target_transform(fitting_rows)
-    node_features, edge_index, edge_features, node_lookup = stage32._graph_tensors(
+    condition_transform = graph_eval._fit_condition_transform(
+        fitting_rows, condition_mode
+    )
+    target_mean, target_sd = graph_eval._target_transform(fitting_rows)
+    node_features, edge_index, edge_features, node_lookup = graph_eval._graph_tensors(
         nodes, edges, residue_features, fitting_rows, device
     )
     coordinates = _coordinate_tensor(nodes, node_lookup, device)
-    fitting_arrays = stage32._prepare_observation_arrays(
+    fitting_arrays = graph_eval._prepare_observation_arrays(
         fitting_rows, node_lookup, condition_transform, target_mean, target_sd
     )
-    test_arrays = stage32._prepare_observation_arrays(
+    test_arrays = graph_eval._prepare_observation_arrays(
         test_rows, node_lookup, condition_transform, target_mean, target_sd
     )
     model = _model(
@@ -746,7 +753,7 @@ def _fit_fixed_epochs_and_predict(
         model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
     )
     loss_function = nn.MSELoss()
-    training_loader = stage32._loader(fitting_arrays, batch_size, shuffle=True)
+    training_loader = graph_eval._loader(fitting_arrays, batch_size, shuffle=True)
 
     history: list[Mapping[str, object]] = []
     progress = tqdm(
@@ -807,7 +814,7 @@ def _selection_for_context(
     edges = tables["edges"]
     residue_features = tables["residue_features"]
     scheme_id = str(context["scheme_id"])
-    condition_mode = stage32.CONDITION_MODE_BY_SCHEME[scheme_id]
+    condition_mode = graph_eval.CONDITION_MODE_BY_SCHEME[scheme_id]
     history_rows: list[Mapping[str, object]] = []
 
     if "source_folds" not in context:
@@ -1064,17 +1071,17 @@ def _average_repeat_predictions(
 
 
 def _load_comparator_predictions(repo_root: Path) -> pd.DataFrame:
-    stage32_path = (
+    graph_eval_path = (
         repo_root
         / "data/interim/residue_graph_neural_evaluation"
         / "residue_graph_neural_predictions.csv"
     )
-    neural = pd.read_csv(stage32_path, dtype={"evaluation_iteration": str})
+    neural = pd.read_csv(graph_eval_path, dtype={"evaluation_iteration": str})
     neural = neural[
         neural["model_id"].isin((STAGE32_GRAPH_MODEL_ID, STAGE32_CENTRE_MODEL_ID))
     ].copy()
 
-    tables = stage32._load_tables(repo_root)
+    tables = graph_eval._load_tables(repo_root)
     reference = tables["reference_predictions"].copy()
     reference["evaluation_iteration"] = reference["evaluation_iteration"].astype(str)
     reference = reference[reference["model_id"].isin(REFERENCE_MODEL_IDS)].copy()
@@ -1083,7 +1090,8 @@ def _load_comparator_predictions(repo_root: Path) -> pd.DataFrame:
     missing = [column for column in required if column not in reference.columns]
     if missing:
         raise ResidueGeometryNeuralEvaluationError(
-            "Stage-31 comparator fields missing: " + ", ".join(missing)
+            "Residue-neighbourhood analysis comparator fields missing: "
+            + ", ".join(missing)
         )
     reference = reference[required]
     combined = pd.concat((neural, reference), ignore_index=True)
@@ -1100,7 +1108,7 @@ def _metric_table(predictions: pd.DataFrame) -> pd.DataFrame:
     for (scheme_id, model_id, iteration), subset in predictions.groupby(
         ["scheme_id", "model_id", "evaluation_iteration"], sort=True
     ):
-        values = stage32._metric_values(
+        values = graph_eval._metric_values(
             subset["y_true"].to_numpy(dtype=float),
             subset["y_pred"].to_numpy(dtype=float),
         )
@@ -1117,7 +1125,7 @@ def _metric_table(predictions: pd.DataFrame) -> pd.DataFrame:
     for (scheme_id, model_id), subset in predictions.groupby(
         ["scheme_id", "model_id"], sort=True
     ):
-        values = stage32._metric_values(
+        values = graph_eval._metric_values(
             subset["y_true"].to_numpy(dtype=float),
             subset["y_pred"].to_numpy(dtype=float),
         )
@@ -1143,7 +1151,7 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
     rows = []
     progress = tqdm(
         total=len(CORE_SCHEME_IDS) * len(COMPARATOR_MODEL_IDS) * 4,
-        desc="Stage-33 grouped bootstrap",
+        desc="residue-geometry neural analysis grouped bootstrap",
         unit="comparison",
         dynamic_ncols=True,
     )
@@ -1177,8 +1185,8 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
             y_true = paired["y_true_a"].to_numpy(dtype=float)
             pred_a = paired["y_pred_a"].to_numpy(dtype=float)
             pred_b = paired["y_pred_b"].to_numpy(dtype=float)
-            metrics_a = stage32._metric_values(y_true, pred_a)
-            metrics_b = stage32._metric_values(y_true, pred_b)
+            metrics_a = graph_eval._metric_values(y_true, pred_a)
+            metrics_b = graph_eval._metric_values(y_true, pred_b)
             group_ids = sorted(paired["evaluation_group_id_a"].astype(str).unique())
             groups = {
                 group_id: paired[
@@ -1187,7 +1195,7 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
                 for group_id in group_ids
             }
             for metric in ("spearman", "pearson", "mae", "rmse"):
-                observed = stage32._metric_difference(metric, metrics_a, metrics_b)
+                observed = graph_eval._metric_difference(metric, metrics_a, metrics_b)
                 rng = np.random.default_rng(
                     _bootstrap_seed(scheme_id, comparator, metric)
                 )
@@ -1201,13 +1209,13 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
                         ignore_index=True,
                     )
                     truth = sampled["y_true_a"].to_numpy(dtype=float)
-                    values_a = stage32._metric_values(
+                    values_a = graph_eval._metric_values(
                         truth, sampled["y_pred_a"].to_numpy(dtype=float)
                     )
-                    values_b = stage32._metric_values(
+                    values_b = graph_eval._metric_values(
                         truth, sampled["y_pred_b"].to_numpy(dtype=float)
                     )
-                    value = stage32._metric_difference(metric, values_a, values_b)
+                    value = graph_eval._metric_difference(metric, values_a, values_b)
                     if math.isfinite(value):
                         bootstrap_values.append(value)
                 if not bootstrap_values:
@@ -1271,7 +1279,7 @@ def rigid_motion_output_check() -> Mapping[str, object]:
     )
     edge_features = torch.randn(edge_index.shape[1], 5, device=device)
     target_node_index = torch.tensor([1, 4], dtype=torch.long, device=device)
-    substitution = torch.zeros((2, len(stage32.SUBSTITUTIONS)), device=device)
+    substitution = torch.zeros((2, len(graph_eval.SUBSTITUTIONS)), device=device)
     substitution[0, 3] = 1.0
     substitution[1, 17] = 1.0
     condition = torch.zeros((2, 2), device=device)
@@ -1310,11 +1318,11 @@ def rigid_motion_output_check() -> Mapping[str, object]:
 
 
 def inspect_residue_geometry_neural_inputs(repo_root: Path) -> Mapping[str, object]:
-    _verify_stage32_module()
-    _verify_stage32_outputs(repo_root)
-    tables = stage32._load_tables(repo_root)
-    observations = stage32._build_analysis_observations(tables)
-    contexts = stage32._make_contexts(tables, observations)
+    _verify_graph_eval_module()
+    _verify_graph_eval_outputs(repo_root)
+    tables = graph_eval._load_tables(repo_root)
+    observations = graph_eval._build_analysis_observations(tables)
+    contexts = graph_eval._make_contexts(tables, observations)
 
     eligibility_column = "experimental_structure_task_eligible"
     if eligibility_column not in observations.columns:
@@ -1388,8 +1396,8 @@ def run_residue_geometry_neural_evaluation(
     postprocess_only: bool = False,
 ) -> Mapping[str, object]:
     _configure_reproducible_execution()
-    _verify_stage32_module()
-    _verify_stage32_outputs(repo_root)
+    _verify_graph_eval_module()
+    _verify_graph_eval_outputs(repo_root)
     if repeats < 1 or repeats > len(FINAL_REPEAT_SEEDS):
         raise ResidueGeometryNeuralEvaluationError(
             f"repeats must be between 1 and {len(FINAL_REPEAT_SEEDS)}"
@@ -1405,9 +1413,9 @@ def run_residue_geometry_neural_evaluation(
     device = torch.device(device_name)
 
     input_review = inspect_residue_geometry_neural_inputs(repo_root)
-    tables = stage32._load_tables(repo_root)
-    observations = stage32._build_analysis_observations(tables)
-    contexts = stage32._make_contexts(tables, observations)
+    tables = graph_eval._load_tables(repo_root)
+    observations = graph_eval._build_analysis_observations(tables)
+    contexts = graph_eval._make_contexts(tables, observations)
 
     output_dir = repo_root / "data/interim/residue_geometry_neural_evaluation"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1454,7 +1462,7 @@ def run_residue_geometry_neural_evaluation(
         )
         context_history_rows.extend(selection_history)
         fitting_rows = _fitting_rows(context)
-        condition_mode = stage32.CONDITION_MODE_BY_SCHEME[str(context["scheme_id"])]
+        condition_mode = graph_eval.CONDITION_MODE_BY_SCHEME[str(context["scheme_id"])]
         for repeat_index, seed in enumerate(FINAL_REPEAT_SEEDS[:repeats], start=1):
             prediction, history = _fit_fixed_epochs_and_predict(
                 fitting_rows,
@@ -1603,9 +1611,9 @@ def run_residue_geometry_neural_evaluation(
         "outer_test_labels_used_for_epoch_selection": False,
         "cross_protein_test_labels_used_for_epoch_selection": False,
         "target_outcome_used_as_model_input": False,
-        "node_features_match_stage32": True,
-        "edge_features_match_stage32": True,
-        "condition_modes_match_stage32": True,
+        "node_features_match_graph_eval": True,
+        "edge_features_match_graph_eval": True,
+        "condition_modes_match_graph_eval": True,
         "geometry_layer_count": GEOMETRY_LAYER_COUNT,
         "hidden_width": HIDDEN_WIDTH,
         "dropout": DROPOUT,
@@ -1631,7 +1639,7 @@ def run_residue_geometry_neural_evaluation(
         "checkpoint_resume_supported": True,
         "postprocess_only_supported": True,
         "rigid_motion_output_check": input_review["rigid_motion_output_check"],
-        "stage32_output_sha256": dict(STAGE32_OUTPUT_HASHES),
+        "graph_eval_output_sha256": dict(STAGE32_OUTPUT_HASHES),
         "software": {
             "device": str(device),
             "gpu_name": (

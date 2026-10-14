@@ -8,7 +8,7 @@ from pathlib import Path
 os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
 from betalactamase_transfer import (  # noqa: E402
-    sequence_residue_graph_neural_evaluation as stage34,
+    sequence_residue_graph_neural_evaluation as sequence_residue_graph_eval,
 )
 
 
@@ -18,24 +18,36 @@ def main() -> None:
     )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
-    parser.add_argument("--repeats", type=int, default=stage34.TRAINING_REPEATS)
-    parser.add_argument("--max-epochs", type=int, default=stage34.MAX_EPOCHS)
-    parser.add_argument("--patience", type=int, default=stage34.EARLY_STOPPING_PATIENCE)
-    parser.add_argument("--batch-size", type=int, default=stage34.BATCH_SIZE)
-    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument(
+        "--repeats", type=int, default=sequence_residue_graph_eval.TRAINING_REPEATS
+    )
+    parser.add_argument(
+        "--max-epochs", type=int, default=sequence_residue_graph_eval.MAX_EPOCHS
+    )
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=sequence_residue_graph_eval.EARLY_STOPPING_PATIENCE,
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=sequence_residue_graph_eval.BATCH_SIZE
+    )
+    parser.add_argument("--validate-inputs", action="store_true")
     parser.add_argument("--postprocess-only", action="store_true")
     args = parser.parse_args()
 
-    if args.check_only and args.postprocess_only:
-        parser.error("--check-only and --postprocess-only cannot be used together")
+    if args.validate_inputs and args.postprocess_only:
+        parser.error("--validate-inputs and --postprocess-only cannot be used together")
 
-    if args.check_only:
-        summary = stage34.inspect_sequence_residue_graph_inputs(args.repo_root)
+    if args.validate_inputs:
+        summary = sequence_residue_graph_eval.inspect_sequence_residue_graph_inputs(
+            args.repo_root
+        )
         print("SEQUENCE + RESIDUE GRAPH INPUT REVIEW PASSED")
         print(json.dumps(summary, indent=2))
         return
 
-    summary = stage34.run_sequence_residue_graph_neural_evaluation(
+    summary = sequence_residue_graph_eval.run_sequence_residue_graph_neural_evaluation(
         args.repo_root,
         device_name=args.device,
         repeats=args.repeats,

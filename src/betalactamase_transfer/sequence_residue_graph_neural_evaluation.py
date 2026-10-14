@@ -83,7 +83,7 @@ SOURCE_GUARD_HASHES = {
         "b66d1c2873f0ae6d62aa3ddfddc24e4a6f761fc9dc9d8f8edf8d521d509e3154"
     ),
     "src/betalactamase_transfer/sequence_plm_evaluation.py": (
-        "8a560c68be57fbb3ff6e63a551608723802fc05e83dd243d6988e030b4351d3b"
+        "c3365bb99f7fbbc83e30807dd107f4d06c91fa0662f1bd3f60cba8b298eaf69f"
     ),
     "src/betalactamase_transfer/sequence_plm_embeddings.py": (
         "fff1bad5cc2f1f29517401f6d963c112a67274d8fe6448e5ef9198eb81a36cc9"
@@ -191,21 +191,23 @@ def _verify_source_guards(repo_root: Path) -> None:
         actual = _sha256(path)
         if actual != expected:
             raise SequenceResidueGraphNeuralEvaluationError(
-                f"Source file differs from the reviewed Stage-34 handoff: {relative}"
+                "Source file differs from the reviewed sequence-plus-residue-graph "
+                f"analysis handoff: {relative}"
             )
 
 
-def _verify_stage32_outputs(repo_root: Path) -> None:
+def _verify_graph_eval_outputs(repo_root: Path) -> None:
     output_dir = repo_root / "data/interim/residue_graph_neural_evaluation"
     for name, expected in STAGE32_OUTPUT_HASHES.items():
         path = output_dir / name
         if not path.is_file():
             raise SequenceResidueGraphNeuralEvaluationError(
-                f"Required Stage-32 output is missing: {path}"
+                f"Required residue-graph neural analysis output is missing: {path}"
             )
         if _sha256(path) != expected:
             raise SequenceResidueGraphNeuralEvaluationError(
-                f"Stage-32 output differs from the reviewed result: {name}"
+                "Residue-graph neural analysis output differs from the reviewed "
+                f"result: {name}"
             )
 
 
@@ -296,7 +298,8 @@ def _attach_embedding_rows(
     joined = frame.merge(index, on=keys, how="left", validate="many_to_one")
     if joined["embedding_row"].isna().any():
         raise SequenceResidueGraphNeuralEvaluationError(
-            "One or more Stage-34 observations lack an ESMC embedding"
+            "One or more sequence-plus-residue-graph analysis observations lack "
+            "an ESMC embedding"
         )
     joined["embedding_row"] = joined["embedding_row"].astype(int)
     return joined
@@ -897,7 +900,7 @@ def _fit_context(
     )
     if ordered_test[graph_stage.TARGET_COLUMN].isna().any():
         raise SequenceResidueGraphNeuralEvaluationError(
-            "Unable to order Stage-34 evaluation rows"
+            "Unable to order sequence-plus-residue-graph analysis evaluation rows"
         )
 
     seeds = list(FINAL_REPEAT_SEEDS)
@@ -1101,7 +1104,7 @@ def _paired_comparisons(
     rows: list[Mapping[str, object]] = []
     progress = tqdm(
         graph_stage.CORE_SCHEME_IDS,
-        desc="Stage-34 grouped bootstrap",
+        desc="sequence-plus-residue-graph analysis grouped bootstrap",
         unit="scheme",
         dynamic_ncols=True,
     )
@@ -1236,7 +1239,7 @@ def _paired_comparisons(
     return pd.DataFrame(rows)
 
 
-def _stage32_reference_predictions(repo_root: Path) -> pd.DataFrame:
+def _graph_eval_reference_predictions(repo_root: Path) -> pd.DataFrame:
     path = (
         repo_root
         / "data/interim/residue_graph_neural_evaluation"
@@ -1253,7 +1256,8 @@ def _stage32_reference_predictions(repo_root: Path) -> pd.DataFrame:
     expected = 2 * EXPECTED_PREDICTION_COUNT
     if len(keep) != expected:
         raise SequenceResidueGraphNeuralEvaluationError(
-            f"Unexpected Stage-32 reference prediction count: {len(keep)}"
+            "Unexpected residue-graph neural analysis reference prediction count: "
+            f"{len(keep)}"
         )
     return keep
 
@@ -1278,7 +1282,8 @@ def _validate_prediction_population(
         or len(paired) != EXPECTED_PREDICTION_COUNT
     ):
         raise SequenceResidueGraphNeuralEvaluationError(
-            "Stage-34 and Stage-32 evaluation populations differ"
+            "sequence-plus-residue-graph analysis and residue-graph neural analysis "
+            "evaluation populations differ"
         )
     if not np.allclose(
         paired["y_true_fusion"].to_numpy(dtype=float),
@@ -1287,14 +1292,15 @@ def _validate_prediction_population(
         atol=TARGET_ABSOLUTE_TOLERANCE,
     ):
         raise SequenceResidueGraphNeuralEvaluationError(
-            "Stage-34 and Stage-32 outcomes differ"
+            "sequence-plus-residue-graph analysis and residue-graph neural analysis "
+            "outcomes differ"
         )
 
 
 def inspect_sequence_residue_graph_inputs(repo_root: Path) -> Mapping[str, object]:
     repo_root = repo_root.resolve()
     _verify_source_guards(repo_root)
-    _verify_stage32_outputs(repo_root)
+    _verify_graph_eval_outputs(repo_root)
     _verify_existing_esmc_selection(repo_root)
     tables = graph_stage._load_tables(repo_root)
     graph_stage._validate_input_contract(tables)
@@ -1369,20 +1375,23 @@ def inspect_sequence_residue_graph_inputs(repo_root: Path) -> Mapping[str, objec
     evaluation_frame = pd.concat(evaluation_records, ignore_index=True)
     if len(evaluation_frame) != EXPECTED_PREDICTION_COUNT:
         raise SequenceResidueGraphNeuralEvaluationError(
-            "Stage-34 evaluation context-row count differs from Stage 32"
+            "sequence-plus-residue-graph analysis evaluation context-row count "
+            "differs from residue-graph neural analysis"
         )
     if evaluation_frame.duplicated(list(graph_stage.COMPARISON_KEY)).any():
         raise SequenceResidueGraphNeuralEvaluationError(
-            "Stage-34 evaluation context identities are duplicated"
+            "sequence-plus-residue-graph analysis evaluation context identities "
+            "are duplicated"
         )
 
-    stage32 = _stage32_reference_predictions(repo_root)
-    _validate_prediction_population(evaluation_frame, stage32)
-    graph_only = stage32[stage32["model_id"].eq(PRIMARY_COMPARATOR)].copy()
-    stage32_ids = set(graph_only["observation_id"].astype(str))
-    if all_evaluation_ids != stage32_ids:
+    graph_eval = _graph_eval_reference_predictions(repo_root)
+    _validate_prediction_population(evaluation_frame, graph_eval)
+    graph_only = graph_eval[graph_eval["model_id"].eq(PRIMARY_COMPARATOR)].copy()
+    graph_eval_ids = set(graph_only["observation_id"].astype(str))
+    if all_evaluation_ids != graph_eval_ids:
         raise SequenceResidueGraphNeuralEvaluationError(
-            "Stage-34 unique evaluation observations do not match Stage 32"
+            "sequence-plus-residue-graph analysis unique evaluation observations "
+            "do not match residue-graph neural analysis"
         )
 
     condition_dim = max(
@@ -1422,14 +1431,14 @@ def inspect_sequence_residue_graph_inputs(repo_root: Path) -> Mapping[str, objec
         "unique_evaluation_observation_count": len(all_evaluation_ids),
         "unique_fitting_observations_across_contexts": len(all_fitting_ids),
         "missing_esmc_evaluation_rows": total_missing_esmc_evaluation_rows,
-        "stage32_population_match": True,
+        "graph_eval_population_match": True,
         "test_labels_used_for_model_selection": False,
         "cross_protein_target_labels_used_for_model_selection": False,
         "embedding_scaling_population": "fitting rows only",
-        "graph_inputs_match_stage32": True,
-        "training_settings_match_stage32": True,
-        "selection_seed_matches_stage32": True,
-        "final_repeat_seeds_match_stage32": True,
+        "graph_inputs_match_graph_eval": True,
+        "training_settings_match_graph_eval": True,
+        "selection_seed_matches_graph_eval": True,
+        "final_repeat_seeds_match_graph_eval": True,
         "parameter_count_at_max_condition_dimension": int(parameter_count),
         "contexts": context_records,
     }
@@ -1473,7 +1482,8 @@ def prepare_sequence_residue_graph_neural_evaluation(
         required = (prediction_path, repeat_path, history_path, training_complete_path)
         if not all(path.is_file() for path in required):
             raise SequenceResidueGraphNeuralEvaluationError(
-                "Postprocessing requires completed Stage-34 training files"
+                "Postprocessing requires completed sequence-plus-residue-graph "
+                "analysis training files"
             )
         predictions = pd.read_csv(
             prediction_path,
@@ -1568,20 +1578,22 @@ def prepare_sequence_residue_graph_neural_evaluation(
 
     if len(predictions) != EXPECTED_PREDICTION_COUNT:
         raise SequenceResidueGraphNeuralEvaluationError(
-            f"Unexpected Stage-34 prediction count: {len(predictions)}"
+            "Unexpected sequence-plus-residue-graph analysis prediction count: "
+            f"{len(predictions)}"
         )
     if len(repeat_predictions) != EXPECTED_PREDICTION_COUNT * repeats:
         raise SequenceResidueGraphNeuralEvaluationError(
-            f"Unexpected Stage-34 repeat-prediction count: {len(repeat_predictions)}"
+            "Unexpected sequence-plus-residue-graph analysis repeat-prediction "
+            f"count: {len(repeat_predictions)}"
         )
     if predictions.duplicated([*graph_stage.COMPARISON_KEY, "model_id"]).any():
         raise SequenceResidueGraphNeuralEvaluationError(
-            "Stage-34 prediction identities are duplicated"
+            "sequence-plus-residue-graph analysis prediction identities are duplicated"
         )
 
-    stage32_reference = _stage32_reference_predictions(repo_root)
-    _validate_prediction_population(predictions, stage32_reference)
-    combined = pd.concat([predictions, stage32_reference], ignore_index=True)
+    graph_eval_reference = _graph_eval_reference_predictions(repo_root)
+    _validate_prediction_population(predictions, graph_eval_reference)
+    combined = pd.concat([predictions, graph_eval_reference], ignore_index=True)
     metrics = _metrics(combined)
     paired = _paired_comparisons(combined, output_dir)
 
@@ -1630,7 +1642,7 @@ def prepare_sequence_residue_graph_neural_evaluation(
         "assay_position_used_as_direct_model_input": False,
         "mechanistic_reference_inputs_used": False,
         "reported_homologue_pair_inputs_used": False,
-        "stage32_population_match": True,
+        "graph_eval_population_match": True,
         "checkpoint_resume_supported": True,
         "postprocess_only_supported": True,
         "outputs": [
@@ -1641,7 +1653,7 @@ def prepare_sequence_residue_graph_neural_evaluation(
             paired_path.name,
             summary_path.name,
         ],
-        "stage32_output_sha256": STAGE32_OUTPUT_HASHES,
+        "graph_eval_output_sha256": STAGE32_OUTPUT_HASHES,
         "sequence_selection_sha256": SEQUENCE_SELECTION_HASHES,
         "source_guard_sha256": SOURCE_GUARD_HASHES,
         "software": {

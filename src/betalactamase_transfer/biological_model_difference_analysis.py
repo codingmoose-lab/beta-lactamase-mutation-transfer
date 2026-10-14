@@ -109,7 +109,7 @@ RESULT_GUARDS = {
         "sequence_residue_graph_predictions.csv"
     ): "6d6ddae3f9654b8dd0a79dd750ede8755b2ac35bb3f8454d0e4d3457796fed80",
     "data/processed/missense_observations.csv": (
-        "2a311f5431a6111726c4c850d3e541cc271bfc55a6faa5cbbd36c5591a5e785c"
+        "846e4343b31418f7f5b9f0841c524c7da4beff27f2c85cbf1c60d9da4d55f608"
     ),
     "data/processed/residue_features.csv": (
         "44fd50744d7ade9b6236c168a2a74c2dcdbeecd5bbdca6febfcac8397a76f644"
@@ -892,7 +892,7 @@ def inspect_biological_model_difference_inputs(repo_root: Path) -> Mapping[str, 
         "structural_analysis_unit": "protein_position",
         "condition_analysis_resampling_unit": "evaluation_group_id",
         "bootstrap_replicates": BOOTSTRAP_REPLICATES,
-        "causal_interpretation_permitted": False,
+        "biological_interpretation_scope": "descriptive_association_only",
     }
 
 
@@ -953,7 +953,7 @@ def run_biological_model_difference_analysis(repo_root: Path) -> Mapping[str, ob
             "negative values indicate lower absolute error for the first named model"
         ),
         "multiple_testing_p_values_reported": False,
-        "structural_associations_are_descriptive_not_causal": True,
+        "structural_associations_are_descriptive": True,
         "outputs": [
             "biological_model_difference_predictions.csv",
             "biological_model_difference_metrics.csv",

@@ -362,7 +362,7 @@ def _observation_contract_rows(roles: pd.DataFrame) -> list[dict[str, Any]]:
         elif role == "evaluation_only":
             note = "evaluation or eligibility metadata only"
         else:
-            note = "provenance/quality metadata; not a default predictor"
+            note = "source/quality metadata; not a default predictor"
         rows.append(
             {
                 "column_name": column,

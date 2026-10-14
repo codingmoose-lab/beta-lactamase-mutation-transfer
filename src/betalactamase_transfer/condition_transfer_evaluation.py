@@ -832,10 +832,10 @@ def review_condition_transfer_inputs(repo_root: Path) -> Mapping[str, object]:
         "antibiotic_condition_mode": "none",
         "temperature_condition_mode": "log2_concentration",
         "test_labels_used_for_model_selection": False,
-        "graph_neural_models_planned_for_stage39": False,
+        "graph_neural_models_planned_for_condition_eval": False,
         "graph_neural_model_reason": (
-            "Stage 39 tests sequence and experimental-structure ridge "
-            "representations against direct source-condition evidence. The "
+            "condition-transfer analysis tests sequence and experimental-structure "
+            "ridge representations against direct source-condition evidence. The "
             "held-out antibiotic has no learned condition identity, so an "
             "unseen antibiotic category is not supplied to any fitted model."
         ),
@@ -916,7 +916,7 @@ def run_condition_transfer_evaluation(repo_root: Path) -> Mapping[str, object]:
         "graph_neural_models_fitted": False,
         "graph_neural_model_reason": (
             "The held-out antibiotic has no learned condition identity. "
-            "Stage 39 therefore tests source-only sequence and "
+            "condition-transfer analysis therefore tests source-only sequence and "
             "experimental-structure ridge models against direct observed "
             "source-condition transfer without inventing an encoding for "
             "the unseen antibiotic."

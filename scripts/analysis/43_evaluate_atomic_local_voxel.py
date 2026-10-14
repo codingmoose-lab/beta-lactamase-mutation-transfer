@@ -41,7 +41,7 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--check-only",
+        "--validate-inputs",
         action="store_true",
         help=(
             "Validate coordinate mapping, voxel construction, comparators, "
@@ -50,7 +50,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     repo_root = args.repo_root.resolve()
-    if args.check_only:
+    if args.validate_inputs:
         summary = inspect_atomic_local_voxel_inputs(repo_root)
         print("ATOMIC LOCAL VOXEL INPUT REVIEW PASSED")
     else:

@@ -9,7 +9,7 @@ from typing import Mapping
 import numpy as np
 import pandas as pd
 
-from . import condition_transfer_evaluation as stage39
+from . import condition_transfer_evaluation as condition_eval
 
 
 class ConcentrationTransferEvaluationError(RuntimeError):
@@ -121,7 +121,9 @@ def _prepare_esmc(
         frame = esmc_stage._join_scheme_observations(
             membership, observations, embedding_index, scheme_id
         )
-        source, target, folds = stage39._source_target(frame, assignments, scheme_id)
+        source, target, folds = condition_eval._source_target(
+            frame, assignments, scheme_id
+        )
         hidden_state, alpha, validation_mae, detail = esmc_stage._select_model_setting(
             folds,
             mutant_embeddings,
@@ -138,7 +140,7 @@ def _prepare_esmc(
             alpha=alpha,
         )
         prediction_frames.append(
-            stage39._sequence_prediction_records(
+            condition_eval._sequence_prediction_records(
                 target,
                 predictions,
                 scheme=scheme,
@@ -149,7 +151,7 @@ def _prepare_esmc(
             )
         )
         selection_rows.extend(
-            stage39._selection_records(
+            condition_eval._selection_records(
                 detail,
                 scheme=scheme,
                 model_id=SEQUENCE_MODEL_IDS[0],
@@ -196,7 +198,9 @@ def _prepare_esm2(
         frame = esm2_stage._join_scheme_observations(
             membership, observations, embedding_index, scheme_id
         )
-        source, target, folds = stage39._source_target(frame, assignments, scheme_id)
+        source, target, folds = condition_eval._source_target(
+            frame, assignments, scheme_id
+        )
         hidden_state, alpha, validation_mae, detail = esm2_stage._select_model_setting(
             folds,
             mutant_embeddings,
@@ -213,7 +217,7 @@ def _prepare_esm2(
             alpha=alpha,
         )
         prediction_frames.append(
-            stage39._sequence_prediction_records(
+            condition_eval._sequence_prediction_records(
                 target,
                 predictions,
                 scheme=scheme,
@@ -224,7 +228,7 @@ def _prepare_esm2(
             )
         )
         selection_rows.extend(
-            stage39._selection_records(
+            condition_eval._selection_records(
                 detail,
                 scheme=scheme,
                 model_id=SEQUENCE_MODEL_IDS[1],
@@ -271,7 +275,9 @@ def _prepare_structure(
         frame = structure_stage._join_scheme_observations(
             membership, observations, residues, scheme_id
         )
-        source, target, folds = stage39._source_target(frame, assignments, scheme_id)
+        source, target, folds = condition_eval._source_target(
+            frame, assignments, scheme_id
+        )
         for original_model, output_model in model_map.items():
             alpha, validation_mae, detail = structure_stage._select_setting(
                 folds,
@@ -302,7 +308,7 @@ def _prepare_structure(
             frame_out["hidden_state_index"] = ""
             prediction_frames.append(frame_out)
             selection_rows.extend(
-                stage39._selection_records(
+                condition_eval._selection_records(
                     detail,
                     scheme=scheme,
                     model_id=output_model,
@@ -347,7 +353,9 @@ def _structure_matched_copy(
     full_predictions: pd.DataFrame,
     structure_predictions: pd.DataFrame,
 ) -> pd.DataFrame:
-    return stage39._structure_matched_copy(full_predictions, structure_predictions)
+    return condition_eval._structure_matched_copy(
+        full_predictions, structure_predictions
+    )
 
 
 def _primary_reference_by_scheme(schemes: pd.DataFrame) -> dict[str, str]:
@@ -416,7 +424,7 @@ def _metric_rows(predictions: pd.DataFrame) -> pd.DataFrame:
                 "model_id": model_id,
                 "n_observations": len(group),
                 "n_groups": group["evaluation_group_id"].nunique(),
-                **stage39._metric_values(
+                **condition_eval._metric_values(
                     group["y_true"].to_numpy(dtype=float),
                     group["y_pred"].to_numpy(dtype=float),
                 ),
@@ -462,10 +470,10 @@ def _paired_bootstrap(
             y_true = paired["y_true"].to_numpy(dtype=float)
             reference_pred = paired["y_pred"].to_numpy(dtype=float)
             model_pred = paired["model_y_pred"].to_numpy(dtype=float)
-            reference_metrics = stage39._metric_values(y_true, reference_pred)
-            model_metrics = stage39._metric_values(y_true, model_pred)
+            reference_metrics = condition_eval._metric_values(y_true, reference_pred)
+            model_metrics = condition_eval._metric_values(y_true, model_pred)
             for metric in METRICS:
-                point = stage39._metric_difference(
+                point = condition_eval._metric_difference(
                     metric, model_metrics[metric], reference_metrics[metric]
                 )
                 rng = np.random.default_rng(
@@ -479,13 +487,13 @@ def _paired_bootstrap(
                     indices = np.concatenate(
                         [group_indices[value] for value in sampled_groups]
                     )
-                    ref_draw = stage39._metric_values(
+                    ref_draw = condition_eval._metric_values(
                         y_true[indices], reference_pred[indices]
                     )[metric]
-                    model_draw = stage39._metric_values(
+                    model_draw = condition_eval._metric_values(
                         y_true[indices], model_pred[indices]
                     )[metric]
-                    draws[draw] = stage39._metric_difference(
+                    draws[draw] = condition_eval._metric_difference(
                         metric, model_draw, ref_draw
                     )
                 finite = draws[np.isfinite(draws)]
@@ -651,9 +659,10 @@ def review_concentration_transfer_inputs(repo_root: Path) -> Mapping[str, object
         "assignment_uses_outcome_values": False,
         "boundary_tests": [4.0, 256.0],
         "interpolation_tests": [8.0, 16.0, 32.0, 64.0, 128.0],
-        "neural_models_fitted_in_stage40": False,
+        "neural_models_fitted_in_concentration_eval": False,
         "neural_model_reason": (
-            "Stage 40 first tests whether fixed sequence and experimental WT-structure "
+            "concentration-response analysis first tests whether fixed sequence "
+            "and experimental WT-structure "
             "representations add predictive information to a numerical "
             "concentration-transfer problem. The direct dose-trajectory references are "
             "retained as the central comparators. Neural concentration models are not "

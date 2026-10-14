@@ -13,7 +13,7 @@ from betalactamase_transfer.sequence_model_sensitivity import (
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--validate-inputs", action="store_true")
     parser.add_argument("--extract", action="store_true")
     parser.add_argument("--allow-download", action="store_true")
     parser.add_argument("--batch-size", type=int, default=4)
@@ -22,7 +22,7 @@ def main() -> None:
 
     root = Path(__file__).resolve().parents[2]
 
-    if args.check_only:
+    if args.validate_inputs:
         summary = review_sequence_model_sensitivity_inputs(
             root, batch_size=args.batch_size
         )

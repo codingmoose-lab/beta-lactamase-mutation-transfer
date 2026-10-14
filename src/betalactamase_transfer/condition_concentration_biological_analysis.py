@@ -11,7 +11,7 @@ import pandas as pd
 
 
 class ConditionConcentrationBiologyError(RuntimeError):
-    """Raised when Stage 41 inputs do not satisfy the analysis contract."""
+    """Raised when condition/concentration inputs violate the analysis contract."""
 
 
 CONDITION_DIR = Path("data/interim/condition_transfer_evaluation")
@@ -51,7 +51,7 @@ EXPECTED_INPUT_HASHES = {
         "f8653b048656154dea687bb6e5f185a48731b976f91afb430fa1b7c53eeb350a"
     ),
     CONDITION_DIR / "condition_transfer_summary.json": (
-        "dfb10460b6d68d067eb77c77a16e2c8713c78dc5c7d1230a2b8026b147763e67"
+        "abf87fe49c8d4f7e9dba24fc74ee92e6bd93cf6a9e9e8e4c74f04f350b9bd915"
     ),
     CONCENTRATION_DIR / "concentration_transfer_predictions.csv": (
         "d38a15859de8bc0f3dff7495487fdfcb123b79aff86cfc2ae1b2c850da5210d4"
@@ -134,20 +134,24 @@ def review_condition_concentration_inputs(repo_root: Path) -> Mapping[str, objec
         ).read_text(encoding="utf-8")
     )
     if condition_summary.get("status") != "PASS":
-        raise ConditionConcentrationBiologyError("Stage 39 summary is not PASS")
+        raise ConditionConcentrationBiologyError(
+            "Condition-transfer analysis summary is not PASS"
+        )
     if concentration_summary.get("status") != "PASS":
-        raise ConditionConcentrationBiologyError("Stage 40 summary is not PASS")
+        raise ConditionConcentrationBiologyError(
+            "Concentration-response analysis summary is not PASS"
+        )
     if condition_summary.get("test_labels_used_for_model_selection") is not False:
         raise ConditionConcentrationBiologyError(
-            "Stage 39 reports held-out labels in model choice"
+            "Condition-transfer analysis reports held-out labels in model choice"
         )
     if concentration_summary.get("test_labels_used_for_model_selection") is not False:
         raise ConditionConcentrationBiologyError(
-            "Stage 40 reports held-out labels in model choice"
+            "Concentration-response analysis reports held-out labels in model choice"
         )
     if concentration_summary.get("log2_concentration_used") is not True:
         raise ConditionConcentrationBiologyError(
-            "Stage 40 does not report log2 concentration"
+            "Concentration-response analysis does not report log2 concentration"
         )
 
     return {
@@ -368,7 +372,11 @@ def _concentration_reference_summary(
 def _unique_concentration_outcomes(
     predictions: pd.DataFrame,
 ) -> pd.DataFrame:
-    _require_columns(predictions, REQUIRED_PREDICTION_COLUMNS, "Stage 40 predictions")
+    _require_columns(
+        predictions,
+        REQUIRED_PREDICTION_COLUMNS,
+        "concentration-response analysis predictions",
+    )
     rows = predictions[
         predictions["population_scope"].astype(str).eq(FULL_POPULATION)
         & predictions["model_id"].astype(str).eq("source_concentration_nearest")
@@ -507,7 +515,11 @@ def _condition_position_summary(
     predictions: pd.DataFrame,
     summary: Mapping[str, object],
 ) -> pd.DataFrame:
-    _require_columns(predictions, REQUIRED_PREDICTION_COLUMNS, "Stage 39 predictions")
+    _require_columns(
+        predictions,
+        REQUIRED_PREDICTION_COLUMNS,
+        "condition-transfer analysis predictions",
+    )
     primary = summary["primary_reference_by_scheme"]
     rows: list[dict[str, object]] = []
 

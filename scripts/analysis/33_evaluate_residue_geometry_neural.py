@@ -38,17 +38,17 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--check-only",
+        "--validate-inputs",
         action="store_true",
         help=(
-            "Validate source tables, Stage-32 comparator files, geometry, "
-            "and evaluation populations without fitting a model."
+            "Validate source tables, residue-graph neural analysis comparator "
+            "files, geometry, and evaluation populations without fitting a model."
         ),
     )
     args = parser.parse_args()
     repo_root = args.repo_root.resolve()
 
-    if args.check_only:
+    if args.validate_inputs:
         summary = inspect_residue_geometry_neural_inputs(repo_root)
         print("RESIDUE GEOMETRY NEURAL INPUT REVIEW PASSED")
     else:

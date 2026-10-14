@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--patience", type=int, default=EARLY_STOPPING_PATIENCE)
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     parser.add_argument(
-        "--check-only",
+        "--validate-inputs",
         action="store_true",
         help=(
             "Validate source tables and evaluation populations without fitting a model."
@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    if args.check_only:
+    if args.validate_inputs:
         summary = inspect_residue_graph_neural_inputs(args.repo_root)
         print("RESIDUE-GRAPH NEURAL INPUT REVIEW PASSED")
     else:

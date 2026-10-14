@@ -132,7 +132,7 @@ def review_sequence_model_sensitivity_inputs(
         "outcome_columns_loaded_for_embedding_inventory": False,
         "existing_esmc_predictions_changed": False,
         "model_selection_performed": False,
-        "stage38_output_exists": (
+        "sequence_sensitivity_eval_output_exists": (
             repo_root / "data/interim/sequence_model_sensitivity/"
             "sequence_model_sensitivity_summary.json"
         ).is_file(),

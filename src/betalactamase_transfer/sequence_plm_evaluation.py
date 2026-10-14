@@ -129,15 +129,15 @@ def _validate_embedding_provenance(
 
     if not summary_index_sha256 or not extraction_index_sha256:
         raise SequencePLMEvaluationError(
-            "Embedding-index SHA-256 is missing from extraction provenance"
+            "Embedding-index SHA-256 is missing from extraction record"
         )
     if summary_index_sha256 != extraction_index_sha256:
         raise SequencePLMEvaluationError(
-            "Embedding-index SHA-256 disagrees between provenance summaries"
+            "Embedding-index SHA-256 disagrees between source summaries"
         )
     if actual_index_sha256 != summary_index_sha256:
         raise SequencePLMEvaluationError(
-            "Embedding-index SHA-256 does not match extraction provenance"
+            "Embedding-index SHA-256 does not match extraction record"
         )
 
     assay_sequences = _load_assay_sequences(repo_root)
@@ -152,7 +152,7 @@ def _validate_embedding_provenance(
 
     if not isinstance(recorded_lengths, dict) or not isinstance(recorded_hashes, dict):
         raise SequencePLMEvaluationError(
-            "Embedding summary lacks assay-sequence provenance"
+            "Embedding summary lacks assay-sequence source record"
         )
 
     for protein_id in EXPECTED_PROTEINS:

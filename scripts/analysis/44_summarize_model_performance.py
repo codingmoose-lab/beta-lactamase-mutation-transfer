@@ -30,7 +30,7 @@ def _parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--check-only",
+        "--validate-inputs",
         action="store_true",
         help=("Review completed result inputs without writing summary tables."),
     )
@@ -41,7 +41,7 @@ def _parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = _parse_args()
 
-    if args.check_only:
+    if args.validate_inputs:
         summary = inspect_model_performance_summary_inputs(ROOT)
 
         print("MODEL PERFORMANCE SUMMARY INPUT REVIEW PASSED")

@@ -16,7 +16,7 @@ from torch import nn
 from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
 
-import betalactamase_transfer.residue_graph_neural_evaluation as stage32
+import betalactamase_transfer.residue_graph_neural_evaluation as graph_eval
 
 
 class AtomicLocalVoxelEvaluationError(RuntimeError):
@@ -30,8 +30,8 @@ REFERENCE_MODEL_IDS = (
     "egnn_residue_regressor",
     "experimental_structure_descriptor_ridge",
 )
-CORE_SCHEME_IDS = tuple(stage32.CORE_SCHEME_IDS)
-TARGET_COLUMN = stage32.TARGET_COLUMN
+CORE_SCHEME_IDS = tuple(graph_eval.CORE_SCHEME_IDS)
+TARGET_COLUMN = graph_eval.TARGET_COLUMN
 
 VOXEL_CHANNELS = ("carbon", "nitrogen", "oxygen", "sulfur", "other", "centre")
 VOXEL_SIZE_ANGSTROM = 1.0
@@ -61,8 +61,8 @@ EXPECTED_PREDICTIONS_PER_MODEL = 118204
 EXPECTED_CONTEXT_COUNT = 17
 EXPECTED_STRUCTURE_PROTEINS = ("NDM-1", "VIM-2")
 
-COMPARISON_KEY = tuple(stage32.COMPARISON_KEY)
-MATCHED_FIELDS = tuple(stage32.MATCHED_FIELDS)
+COMPARISON_KEY = tuple(graph_eval.COMPARISON_KEY)
+MATCHED_FIELDS = tuple(graph_eval.MATCHED_FIELDS)
 
 
 def _write_csv(frame: pd.DataFrame, path: Path) -> None:
@@ -288,7 +288,17 @@ def _voxelise_residue_environment(
         )
     origin, rotation = _residue_local_frame(residue_atoms)
     all_coordinates = atoms[["x", "y", "z"]].to_numpy(dtype=float)
-    local = (all_coordinates - origin) @ rotation
+    if not np.isfinite(all_coordinates).all():
+        raise AtomicLocalVoxelEvaluationError("Protein atom coordinates are non-finite")
+    if not np.isfinite(origin).all() or not np.isfinite(rotation).all():
+        raise AtomicLocalVoxelEvaluationError("Local coordinate frame is non-finite")
+    centred = all_coordinates - origin
+    local = np.einsum("ij,jk->ik", centred, rotation, optimize=False)
+    if not np.isfinite(local).all():
+        raise AtomicLocalVoxelEvaluationError(
+            "Local protein-atom coordinates are non-finite after "
+            "coordinate transformation"
+        )
     cube_mask = np.all(
         (local >= -VOXEL_HALF_WIDTH_ANGSTROM) & (local < VOXEL_HALF_WIDTH_ANGSTROM),
         axis=1,
@@ -462,7 +472,7 @@ class AtomicLocalVoxelCNN(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool3d(1),
         )
-        readout_dim = CNN_WIDTHS[2] + len(stage32.SUBSTITUTIONS) + condition_dim
+        readout_dim = CNN_WIDTHS[2] + len(graph_eval.SUBSTITUTIONS) + condition_dim
         self.readout = nn.Sequential(
             nn.Linear(readout_dim, READOUT_WIDTH),
             nn.ReLU(),
@@ -517,7 +527,7 @@ def _voxel_indices(
 def _prepare_arrays(
     frame: pd.DataFrame,
     lookup: Mapping[tuple[str, int], int],
-    condition_transform: stage32.ConditionTransform,
+    condition_transform: graph_eval.ConditionTransform,
     target_mean: float,
     target_sd: float,
 ) -> Mapping[str, np.ndarray]:
@@ -526,7 +536,7 @@ def _prepare_arrays(
         raise AtomicLocalVoxelEvaluationError("Observation outcomes are not finite")
     return {
         "voxel_index": _voxel_indices(frame, lookup),
-        "substitution": stage32._substitution_matrix(frame),
+        "substitution": graph_eval._substitution_matrix(frame),
         "condition": condition_transform.encode(frame),
         "target": ((target - target_mean) / target_sd).astype(np.float32),
         "target_original": target.astype(np.float64),
@@ -587,8 +597,10 @@ def _fit_with_validation(
     batch_size: int,
 ) -> tuple[int, float, list[Mapping[str, object]]]:
     _set_seed(seed)
-    condition_transform = stage32._fit_condition_transform(fitting_rows, condition_mode)
-    target_mean, target_sd = stage32._target_transform(fitting_rows)
+    condition_transform = graph_eval._fit_condition_transform(
+        fitting_rows, condition_mode
+    )
+    target_mean, target_sd = graph_eval._target_transform(fitting_rows)
     fitting_arrays = _prepare_arrays(
         fitting_rows, lookup, condition_transform, target_mean, target_sd
     )
@@ -674,8 +686,10 @@ def _fit_fixed_epochs_and_predict(
     batch_size: int,
 ) -> tuple[np.ndarray, list[Mapping[str, object]]]:
     _set_seed(seed)
-    condition_transform = stage32._fit_condition_transform(fitting_rows, condition_mode)
-    target_mean, target_sd = stage32._target_transform(fitting_rows)
+    condition_transform = graph_eval._fit_condition_transform(
+        fitting_rows, condition_mode
+    )
+    target_mean, target_sd = graph_eval._target_transform(fitting_rows)
     fitting_arrays = _prepare_arrays(
         fitting_rows, lookup, condition_transform, target_mean, target_sd
     )
@@ -731,7 +745,7 @@ def _selection_for_context(
     batch_size: int,
 ) -> tuple[int, list[Mapping[str, object]]]:
     scheme_id = str(context["scheme_id"])
-    condition_mode = stage32.CONDITION_MODE_BY_SCHEME[scheme_id]
+    condition_mode = graph_eval.CONDITION_MODE_BY_SCHEME[scheme_id]
     history_rows: list[Mapping[str, object]] = []
     if "source_folds" not in context:
         epoch_count, validation_mae, history = _fit_with_validation(
@@ -1107,7 +1121,7 @@ def _metrics(predictions: pd.DataFrame) -> pd.DataFrame:
         sort=True,
         dropna=False,
     ):
-        values = stage32._metric_values(
+        values = graph_eval._metric_values(
             group["y_true"].to_numpy(dtype=float),
             group["y_pred"].to_numpy(dtype=float),
         )
@@ -1124,7 +1138,7 @@ def _metrics(predictions: pd.DataFrame) -> pd.DataFrame:
     for (scheme_id, model_id), group in predictions.groupby(
         ["scheme_id", "model_id"], sort=True, dropna=False
     ):
-        values = stage32._metric_values(
+        values = graph_eval._metric_values(
             group["y_true"].to_numpy(dtype=float),
             group["y_pred"].to_numpy(dtype=float),
         )
@@ -1176,7 +1190,7 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
                 paired["y_true_a"].to_numpy(dtype=float),
                 paired["y_true_b"].to_numpy(dtype=float),
                 rtol=0.0,
-                atol=stage32.TARGET_ABSOLUTE_TOLERANCE,
+                atol=graph_eval.TARGET_ABSOLUTE_TOLERANCE,
             ):
                 raise AtomicLocalVoxelEvaluationError(
                     f"Paired outcomes disagree for {scheme_id}/{reference_model_id}"
@@ -1184,8 +1198,8 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
             y_true = paired["y_true_a"].to_numpy(dtype=float)
             pred_a = paired["y_pred_a"].to_numpy(dtype=float)
             pred_b = paired["y_pred_b"].to_numpy(dtype=float)
-            metrics_a = stage32._metric_values(y_true, pred_a)
-            metrics_b = stage32._metric_values(y_true, pred_b)
+            metrics_a = graph_eval._metric_values(y_true, pred_a)
+            metrics_b = graph_eval._metric_values(y_true, pred_b)
             group_ids = sorted(paired["evaluation_group_id"].astype(str).unique())
             groups = {
                 group_id: paired.loc[
@@ -1194,7 +1208,7 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
                 for group_id in group_ids
             }
             for metric in ("spearman", "pearson", "mae", "rmse"):
-                observed = stage32._metric_difference(metric, metrics_a, metrics_b)
+                observed = graph_eval._metric_difference(metric, metrics_a, metrics_b)
                 rng = np.random.default_rng(
                     _bootstrap_seed(scheme_id, reference_model_id, metric)
                 )
@@ -1208,13 +1222,13 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
                         ignore_index=True,
                     )
                     truth = sampled["y_true_a"].to_numpy(dtype=float)
-                    values_a = stage32._metric_values(
+                    values_a = graph_eval._metric_values(
                         truth, sampled["y_pred_a"].to_numpy(dtype=float)
                     )
-                    values_b = stage32._metric_values(
+                    values_b = graph_eval._metric_values(
                         truth, sampled["y_pred_b"].to_numpy(dtype=float)
                     )
-                    value = stage32._metric_difference(metric, values_a, values_b)
+                    value = graph_eval._metric_difference(metric, values_a, values_b)
                     if math.isfinite(value):
                         bootstrap_values.append(value)
                 if not bootstrap_values:
@@ -1243,10 +1257,10 @@ def _paired_comparisons(predictions: pd.DataFrame) -> pd.DataFrame:
 
 
 def inspect_atomic_local_voxel_inputs(repo_root: Path) -> Mapping[str, object]:
-    tables = stage32._load_tables(repo_root)
-    stage32._validate_input_contract(tables)
-    observations = stage32._build_analysis_observations(tables)
-    contexts = stage32._make_contexts(tables, observations)
+    tables = graph_eval._load_tables(repo_root)
+    graph_eval._validate_input_contract(tables)
+    observations = graph_eval._build_analysis_observations(tables)
+    contexts = graph_eval._make_contexts(tables, observations)
     voxel_bank, lookup, audit = _load_atomic_context(repo_root)
     if len(contexts) != EXPECTED_CONTEXT_COUNT:
         raise AtomicLocalVoxelEvaluationError(
@@ -1319,9 +1333,9 @@ def run_atomic_local_voxel_evaluation(
         raise AtomicLocalVoxelEvaluationError("CUDA was requested but is unavailable")
     device = torch.device(device_name)
     input_review = inspect_atomic_local_voxel_inputs(repo_root)
-    tables = stage32._load_tables(repo_root)
-    observations = stage32._build_analysis_observations(tables)
-    contexts = stage32._make_contexts(tables, observations)
+    tables = graph_eval._load_tables(repo_root)
+    observations = graph_eval._build_analysis_observations(tables)
+    contexts = graph_eval._make_contexts(tables, observations)
     voxel_bank_cpu, lookup, audit = _load_atomic_context(repo_root)
     voxel_bank = voxel_bank_cpu.to(device=device, dtype=torch.float32)
 
@@ -1385,7 +1399,7 @@ def run_atomic_local_voxel_evaluation(
             raise AtomicLocalVoxelEvaluationError("Unable to order voxel-CNN test rows")
         repeat_rows: list[Mapping[str, object]] = []
         final_history: list[Mapping[str, object]] = []
-        condition_mode = stage32.CONDITION_MODE_BY_SCHEME[str(context["scheme_id"])]
+        condition_mode = graph_eval.CONDITION_MODE_BY_SCHEME[str(context["scheme_id"])]
         for repeat_index, seed in enumerate(FINAL_REPEAT_SEEDS[:repeats], start=1):
             prediction, history = _fit_fixed_epochs_and_predict(
                 fitting_rows,

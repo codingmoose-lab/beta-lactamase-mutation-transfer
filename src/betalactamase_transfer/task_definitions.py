@@ -32,7 +32,9 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
             "specified?"
         ),
         "target_field": "score_analysis",
-        "target_scale_policy": "retain_source_assay_scale_with_publication_lower_floor",
+        "target_scale_policy": (
+            "retain_source_assay_scale_with_reported_minimum_fitness_score"
+        ),
         "primary_metric": "spearman",
         "secondary_metrics": "pearson;mae;rmse",
         "representation_policy": "compare_modalities_on_matched_eligible_rows",
@@ -49,7 +51,9 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
             "temperature conditions?"
         ),
         "target_field": "score_analysis",
-        "target_scale_policy": "retain_source_assay_scale_with_publication_lower_floor",
+        "target_scale_policy": (
+            "retain_source_assay_scale_with_reported_minimum_fitness_score"
+        ),
         "primary_metric": "spearman",
         "secondary_metrics": "pearson;mae;rmse",
         "representation_policy": "compare_modalities_on_matched_eligible_rows",
@@ -67,7 +71,7 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
         ),
         "target_field": "score_analysis",
         "target_scale_policy": (
-            "retain_each_source_scale_with_publication_lower_floor_"
+            "retain_each_source_scale_with_reported_minimum_fitness_score_"
             "no_global_harmonisation"
         ),
         "primary_metric": "spearman",
@@ -87,7 +91,7 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
         ),
         "target_field": "score_analysis",
         "target_scale_policy": (
-            "retain_each_source_scale_with_publication_lower_floor_"
+            "retain_each_source_scale_with_reported_minimum_fitness_score_"
             "no_global_harmonisation"
         ),
         "primary_metric": "spearman",
@@ -106,7 +110,9 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
             "defined?"
         ),
         "target_field": "score_analysis",
-        "target_scale_policy": "retain_source_assay_scale_with_publication_lower_floor",
+        "target_scale_policy": (
+            "retain_source_assay_scale_with_reported_minimum_fitness_score"
+        ),
         "primary_metric": "spearman",
         "secondary_metrics": "pearson;mae;rmse",
         "representation_policy": "compare_modalities_on_matched_eligible_rows",
@@ -123,7 +129,9 @@ TASK_DEFINITIONS: tuple[Mapping[str, Any], ...] = (
             "mutations or test concentrations?"
         ),
         "target_field": "score_analysis",
-        "target_scale_policy": "retain_source_assay_scale_with_publication_lower_floor",
+        "target_scale_policy": (
+            "retain_source_assay_scale_with_reported_minimum_fitness_score"
+        ),
         "primary_metric": "spearman",
         "secondary_metrics": "pearson;mae;rmse",
         "representation_policy": "compare_modalities_on_matched_eligible_rows",
@@ -645,7 +653,7 @@ def prepare_task_definitions(repo_root: Path) -> dict[str, Any]:
         "outcome",
         "grouping",
         "evaluation_only",
-        "provenance_quality",
+        "source_quality_metadata",
     }
     forbidden_enabled = roles[
         roles["role"].isin(forbidden_default_roles)
@@ -817,7 +825,7 @@ def prepare_task_definitions(repo_root: Path) -> dict[str, Any]:
         ),
         "score_policy": (
             "Task definition preserves score_original unchanged while score_analysis "
-            "applies the reported lower DMS fitness floor on each "
+            "applies the reported lower DMS minimum fitness score on each "
             "source-assay scale; "
             "defines no "
             "global harmonisation"
