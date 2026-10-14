@@ -81,7 +81,7 @@ def test_residue_graph_cli_is_self_contained() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            str(REPO_ROOT / "scripts/data/30_prepare_residue_graphs.py"),
+            str(REPO_ROOT / "scripts/analysis/30_prepare_residue_graphs.py"),
             "--help",
         ],
         cwd=REPO_ROOT,

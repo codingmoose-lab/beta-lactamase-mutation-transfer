@@ -83,7 +83,7 @@ DSSP solvent-accessibility values are not used as a replacement for the Shrake-R
 python scripts/data/16_prepare_processed_tables.py
 ```
 
-Processed-table preparation preserves `score_original` unchanged and creates `score_analysis`, which applies only the publication-defined lower DMS fitness floor recorded for each assay. It also creates the checked observation, residue, pair-geometry, reported-comparison, EC50, and assay tables. It also writes `observation_column_roles.csv`. Only fields declared as default mutation or condition inputs are permitted by default; outcomes, grouping identifiers, evaluation-only fields, and source and quality fields remain excluded unless a task definition permits a different use. No train/validation/test assignment is created here.
+Processed-table preparation preserves `score_original` unchanged and creates `score_analysis`, which applies the reported minimum fitness score recorded for each assay. It also creates the checked observation, residue, pair-geometry, reported-comparison, EC50, and assay tables. It also writes `observation_column_roles.csv`. Only fields declared as default mutation or condition inputs are permitted by default; outcomes, grouping identifiers, evaluation-only fields, and source and quality fields remain excluded unless a task definition permits a different use. No train/validation/test assignment is created here.
 
 ## Task definitions
 
@@ -140,7 +140,7 @@ Scientific acceptance also requires inspection of the generated tables affected 
 After the preparation, task, partition, and modelling-view checks are closed, run:
 
 ```bash
-python scripts/data/20_run_baseline_evaluation.py
+python scripts/analysis/20_run_baseline_evaluation.py
 ```
 
 This command evaluates simple baselines under the specified evaluation schemes, selects ridge regularisation only from permitted validation/source rows, and prepares the direct 1,513-pair homologue transfer analysis. It does not create sequence embeddings, residue graphs, structural images, or neural models.
@@ -148,7 +148,7 @@ This command evaluates simple baselines under the specified evaluation schemes, 
 After the baseline predictions are written, calculate grouped-bootstrap uncertainty with:
 
 ```bash
-python scripts/data/21_calculate_baseline_uncertainty.py
+python scripts/analysis/21_calculate_baseline_uncertainty.py
 ```
 
 ## Matched homologue baseline analysis
@@ -156,12 +156,12 @@ python scripts/data/21_calculate_baseline_uncertainty.py
 After baseline predictions and grouped uncertainty are available, run:
 
 ```bash
-python scripts/data/22_analyze_homologue_baseline_transfer.py
+python scripts/analysis/22_analyze_homologue_baseline_transfer.py
 ```
 
 This command performs the outcome-independent 1,513-pair shared-wild-type homologue
-analysis, floor sensitivity checks, the 478-pair neither-at-floor analysis, and the
-306 discordant-floor analysis. It is post-hoc analysis of saved baseline predictions;
+analysis, minimum-score sensitivity checks, the 478-pair both-above-minimum analysis, and the
+306 discordant minimum-score analysis. It is post-hoc analysis of saved baseline predictions;
 it does not refit prediction models.
 
 ## Sequence-neighbourhood evaluation
@@ -169,7 +169,7 @@ it does not refit prediction models.
 Run:
 
 ```bash
-python scripts/data/23_evaluate_sequence_neighbourhood.py
+python scripts/analysis/23_evaluate_sequence_neighbourhood.py
 ```
 
 Here, `neighbourhood` means the biological amino-acid neighbourhood around the mutated
@@ -199,12 +199,12 @@ data preparation and statistical modelling commands.
 
 Prepare and validate the mutation-to-embedding index constructed without mutation-effect outcomes with:
 
-    python scripts/data/24_prepare_sequence_plm_embeddings.py
+    python scripts/analysis/24_prepare_sequence_plm_embeddings.py
 
 Run GPU extraction with the pinned checkpoint already available in the local
 model cache using:
 
-    python scripts/data/24_prepare_sequence_plm_embeddings.py --extract
+    python scripts/analysis/24_prepare_sequence_plm_embeddings.py --extract
 
 `--allow-download` is used only when an intentional checkpoint download is
 required. `--overwrite` is used only when replacing existing embedding outputs
@@ -224,7 +224,7 @@ environment. No unverified historical PyTorch installation URL is asserted.
 
 After validating the extracted arrays and their extraction records, run:
 
-    python scripts/data/25_evaluate_sequence_plm.py
+    python scripts/analysis/25_evaluate_sequence_plm.py
 
 The ESMC model uses the mutation-site hidden-state difference relative to the
 corresponding wild-type residue, together with ordered substitution identity and
@@ -241,7 +241,7 @@ After the mutation/condition, sequence-neighbourhood, and ESMC predictions are
 available, run:
 
 ```bash
-python scripts/data/26_compare_sequence_models.py
+python scripts/analysis/26_compare_sequence_models.py
 ```
 
 The command compares the three models on identical test observations and calculates
@@ -255,7 +255,7 @@ See `docs/sequence_model_comparison.md`.
 After the sequence-model comparison is available, run:
 
 ```bash
-python scripts/data/27_evaluate_experimental_structure.py
+python scripts/analysis/27_evaluate_experimental_structure.py
 ```
 
 This command restricts fitting and evaluation to observations marked
@@ -273,7 +273,7 @@ See `docs/experimental_structure_evaluation.md`.
 After Script 27 has produced the verified matched structural predictions, run:
 
 ```bash
-python scripts/data/28_compare_structure_matched_models.py
+python scripts/analysis/28_compare_structure_matched_models.py
 ```
 
 This command compares mutation/condition, sequence-neighbourhood, ESMC, and
@@ -293,7 +293,7 @@ See `docs/structure_matched_model_comparison.md`.
 After the structure-matched model comparison is available, run:
 
 ```bash
-python scripts/data/29_analyze_biological_errors.py
+python scripts/analysis/29_analyze_biological_errors.py
 ```
 
 This command analyzes the verified Script 28 prediction errors against catalytic-Zn
@@ -313,7 +313,7 @@ After the structure-matched analyses and biological error analysis have been
 checked, prepare the experimental-structure residue graphs constructed without mutation-effect outcomes with:
 
 ```bash
-python scripts/data/30_prepare_residue_graphs.py
+python scripts/analysis/30_prepare_residue_graphs.py
 ```
 
 The command builds one undirected graph for each selected experimental
@@ -330,7 +330,7 @@ See `docs/residue_graphs.md`.
 Evaluate whether local three-dimensional residue neighbours add information relative to the mutated residue's own structural descriptors with:
 
 ```bash
-python scripts/data/31_evaluate_residue_neighbourhood.py
+python scripts/analysis/31_evaluate_residue_neighbourhood.py
 ```
 
 The analysis uses the fixed experimental-structure residue graph and the same structure-supported observation populations used by the descriptor analysis.
@@ -342,13 +342,13 @@ See `docs/residue_neighbourhood_evaluation.md`.
 Inspect the graph-model inputs with:
 
 ```bash
-python scripts/data/32_evaluate_residue_graph_neural.py --check-only
+python scripts/analysis/32_evaluate_residue_graph_neural.py --validate-inputs
 ```
 
 Then fit and evaluate the centre-residue control and residue-graph neural model on the intended compute device:
 
 ```bash
-python scripts/data/32_evaluate_residue_graph_neural.py --device cuda
+python scripts/analysis/32_evaluate_residue_graph_neural.py --device cuda
 ```
 
 Model selection uses permitted validation rows for within-protein tasks and source-protein folds for cross-protein tasks. Final evaluation outcomes and cross-protein target outcomes are not used to select the training epoch.
@@ -360,13 +360,13 @@ See `docs/residue_graph_neural_evaluation.md`.
 Inspect the geometry-model inputs with:
 
 ```bash
-python scripts/data/33_evaluate_residue_geometry_neural.py --check-only
+python scripts/analysis/33_evaluate_residue_geometry_neural.py --validate-inputs
 ```
 
 Then fit the E(n)-equivariant residue-geometry model on the intended compute device:
 
 ```bash
-python scripts/data/33_evaluate_residue_geometry_neural.py --device cuda
+python scripts/analysis/33_evaluate_residue_geometry_neural.py --device cuda
 ```
 
 The model uses the same residue graph, mutation encoding, assay-condition inputs, evaluation populations, and selection rules as the residue-graph neural comparison while adding three-dimensional residue geometry.
@@ -378,13 +378,13 @@ See `docs/residue_geometry_neural_evaluation.md`.
 Inspect the combined sequence/graph inputs with:
 
 ```bash
-python scripts/data/34_evaluate_sequence_residue_graph.py --check-only
+python scripts/analysis/34_evaluate_sequence_residue_graph.py --validate-inputs
 ```
 
 Then fit the predefined ESMC-plus-residue-graph model on the intended compute device:
 
 ```bash
-python scripts/data/34_evaluate_sequence_residue_graph.py --device cuda
+python scripts/analysis/34_evaluate_sequence_residue_graph.py --device cuda
 ```
 
 The ESMC site-difference representation is combined with the established residue-graph model without reopening hidden-state selection after final evaluation results are available.
@@ -396,13 +396,13 @@ See `docs/sequence_residue_graph_neural_evaluation.md`.
 After the residue-graph and sequence-plus-residue-graph evaluations are available, inspect the sequence/graph combination inputs with:
 
 ```bash
-python scripts/data/35_analyze_sequence_structure_complementarity.py --check-only
+python scripts/analysis/35_analyze_sequence_structure_complementarity.py --validate-inputs
 ```
 
 Then run:
 
 ```bash
-python scripts/data/35_analyze_sequence_structure_complementarity.py
+python scripts/analysis/35_analyze_sequence_structure_complementarity.py
 ```
 
 The analysis selects a convex combination of the established ESMC and residue-graph predictions using permitted validation rows or source-protein cross-validation. Final evaluation outcomes and cross-protein target outcomes are not used to select the weight. The post-evaluation sequence-versus-graph oracle is diagnostic only and is never used for model selection.
@@ -414,16 +414,16 @@ See `docs/sequence_structure_complementarity.md`.
 Inspect the matched prediction and biological-annotation inputs with:
 
 ```bash
-python scripts/data/36_analyze_biological_model_differences.py --check-only
+python scripts/analysis/36_analyze_biological_model_differences.py --validate-inputs
 ```
 
 Then run:
 
 ```bash
-python scripts/data/36_analyze_biological_model_differences.py
+python scripts/analysis/36_analyze_biological_model_differences.py
 ```
 
-This analysis does not fit or select a prediction model. It compares matched absolute-error differences for the centre-residue control, residue graph, residue geometry, ESMC sequence model, sequence-plus-residue-graph model, and validation-selected sequence/graph prediction. Structural associations use protein positions as the statistical unit. Condition summaries resample `evaluation_group_id`. The reported associations are descriptive and are not interpreted as causal molecular effects.
+This analysis does not fit or select a prediction model. It compares matched absolute-error differences for the centre-residue control, residue graph, residue geometry, ESMC sequence model, sequence-plus-residue-graph model, and validation-selected sequence/graph prediction. Structural associations use protein positions as the statistical unit. Condition summaries resample `evaluation_group_id`. The reported associations are descriptive and are not interpreted as evidence of a molecular cause.
 
 See `docs/biological_model_difference_analysis.md`.
 
@@ -432,19 +432,19 @@ See `docs/biological_model_difference_analysis.md`.
 Inspect the fixed model settings and saved three-seed predictions with:
 
 ```bash
-python scripts/data/37_analyze_training_seed_stability.py --check-only
+python scripts/analysis/37_analyze_training_seed_stability.py --validate-inputs
 ```
 
 A complete rebuild of the ten-seed stability analysis fits seven additional seeds per neural model and evaluation context and therefore requires the appropriate compute device:
 
 ```bash
-python scripts/data/37_analyze_training_seed_stability.py --device cuda
+python scripts/analysis/37_analyze_training_seed_stability.py --device cuda
 ```
 
 When the completed additional fits are already present, regenerate only the summaries without fitting again:
 
 ```bash
-python scripts/data/37_analyze_training_seed_stability.py --postprocess-only --device cpu
+python scripts/analysis/37_analyze_training_seed_stability.py --postprocess-only --device cpu
 ```
 
 See `docs/training_seed_stability.md`.
@@ -454,13 +454,13 @@ See `docs/training_seed_stability.md`.
 Inspect the ESMC results and the saved ESM-2 extraction records with:
 
 ```bash
-python scripts/data/38_analyze_sequence_model_sensitivity.py --check-only
+python scripts/analysis/38_analyze_sequence_model_sensitivity.py --validate-inputs
 ```
 
 With the ESM-2 embeddings already present, run the comparison with:
 
 ```bash
-python scripts/data/38_analyze_sequence_model_sensitivity.py
+python scripts/analysis/38_analyze_sequence_model_sensitivity.py
 ```
 
 Embedding extraction is a separate GPU operation and should only be repeated when the saved ESM-2 arrays are intentionally being rebuilt. See `docs/sequence_model_sensitivity.md`.
@@ -470,8 +470,8 @@ Embedding extraction is a separate GPU operation and should only be repeated whe
 Inspect and then evaluate the held-out-antibiotic and AMP temperature-transfer tests with:
 
 ```bash
-python scripts/data/39_evaluate_condition_transfer.py --check-only
-python scripts/data/39_evaluate_condition_transfer.py
+python scripts/analysis/39_evaluate_condition_transfer.py --validate-inputs
+python scripts/analysis/39_evaluate_condition_transfer.py
 ```
 
 Settings are selected from source-condition rows only. Held-out condition outcomes are not used for model choice.
@@ -483,8 +483,8 @@ See `docs/condition_transfer_evaluation.md`.
 Inspect and then evaluate the leave-one-concentration-out AMP tests with:
 
 ```bash
-python scripts/data/40_evaluate_concentration_transfer.py --check-only
-python scripts/data/40_evaluate_concentration_transfer.py
+python scripts/analysis/40_evaluate_concentration_transfer.py --validate-inputs
+python scripts/analysis/40_evaluate_concentration_transfer.py
 ```
 
 The direct same-mutation concentration references are defined by interpolation or boundary extrapolation rules before target performance is examined.
@@ -496,8 +496,8 @@ See `docs/concentration_transfer_evaluation.md`.
 Inspect and summarize the completed condition- and concentration-transfer results with:
 
 ```bash
-python scripts/data/41_analyze_condition_concentration_biology.py --check-only
-python scripts/data/41_analyze_condition_concentration_biology.py
+python scripts/analysis/41_analyze_condition_concentration_biology.py --validate-inputs
+python scripts/analysis/41_analyze_condition_concentration_biology.py
 ```
 
 This analysis summarizes already evaluated transfer results and mutation/concentration trajectories. It does not fit another prediction model.
@@ -509,8 +509,8 @@ See `docs/condition_concentration_biological_analysis.md`.
 Inspect and analyze model behavior on the 1,513 directly comparable substitutions at 81 aligned shared-WT positions with:
 
 ```bash
-python scripts/data/42_analyze_matched_homologue_models.py --check-only
-python scripts/data/42_analyze_matched_homologue_models.py
+python scripts/analysis/42_analyze_matched_homologue_models.py --validate-inputs
+python scripts/analysis/42_analyze_matched_homologue_models.py
 ```
 
 The paired substitution population is defined without mutation-effect values. The 132 publication-reported WT-reversion rows remain separate supporting evidence.
@@ -522,19 +522,19 @@ See `docs/matched_homologue_model_analysis.md`.
 Inspect coordinate mapping, voxel construction, comparator coverage, and evaluation populations with:
 
 ```bash
-python scripts/data/43_evaluate_atomic_local_voxel.py --check-only --device cpu
+python scripts/analysis/43_evaluate_atomic_local_voxel.py --validate-inputs --device cpu
 ```
 
 A complete rebuild fits the 3-D CNN on the selected experimental wild-type structures and requires the intended compute device:
 
 ```bash
-python scripts/data/43_evaluate_atomic_local_voxel.py --device cuda
+python scripts/analysis/43_evaluate_atomic_local_voxel.py --device cuda
 ```
 
 When all 17 completed context checkpoints are already present, regenerate only the final aggregation, metrics, and comparisons with:
 
 ```bash
-python scripts/data/43_evaluate_atomic_local_voxel.py --postprocess-only --device cpu
+python scripts/analysis/43_evaluate_atomic_local_voxel.py --postprocess-only --device cpu
 ```
 
 The atom-level representation uses protein heavy atoms from the selected experimental PDB chains. Zinc ions, other ligands, mutation-effect outcomes, biological-reference annotations, and predicted mutant structures are excluded from voxel construction.

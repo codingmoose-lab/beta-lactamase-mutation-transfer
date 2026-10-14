@@ -36,4 +36,6 @@ def test_model_performance_summary_input_contract() -> None:
     assert summary["training_seed_direction_change_count"] == 1
     assert summary["evaluation_population_count"] == 2
 
-    assert summary["causal_interpretation_permitted"] is False
+    assert summary["model_source_assignments_checked"] is True
+
+    assert summary["biological_interpretation_scope"] == "descriptive_association_only"

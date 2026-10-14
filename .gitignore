@@ -32,3 +32,6 @@ data/*.zip
 
 # Local research planning and update backups.
 .local/
+
+# Local research verification files.
+audits/

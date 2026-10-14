@@ -27,7 +27,9 @@ def test_biological_model_difference_input_contract() -> None:
         / "sequence_structure_summary.json",
     ]
     if not all(path.is_file() for path in required):
-        pytest.skip("Full repository data are not present in this test copy")
+        pytest.skip(
+            "Required generated outputs are unavailable in this test environment"
+        )
 
     sequence_structure_summary = json.loads(required[-1].read_text(encoding="utf-8"))
     if sequence_structure_summary.get("model_id") != module.MIXTURE_MODEL:
@@ -37,4 +39,4 @@ def test_biological_model_difference_input_contract() -> None:
     assert summary["status"] == "PASS"
     assert summary["matched_rows"] == 118204
     assert summary["model_selection_performed"] is False
-    assert summary["causal_interpretation_permitted"] is False
+    assert summary["biological_interpretation_scope"] == "descriptive_association_only"

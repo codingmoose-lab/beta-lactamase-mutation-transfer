@@ -13,15 +13,17 @@ module = importlib.import_module(
 )
 
 
-def test_stage33_model_contract() -> None:
+def test_geometry_eval_model_contract() -> None:
     assert module.MODEL_ID == "egnn_residue_regressor"
     assert module.HIDDEN_WIDTH == 128
     assert module.GEOMETRY_LAYER_COUNT == 2
     assert module.MAX_EPOCHS == 400
     assert module.EARLY_STOPPING_PATIENCE == 20
     assert module.TRAINING_REPEATS == 3
-    assert module.SELECTION_SEED != module.stage32.SELECTION_SEED
-    assert set(module.FINAL_REPEAT_SEEDS).isdisjoint(module.stage32.FINAL_REPEAT_SEEDS)
+    assert module.SELECTION_SEED != module.graph_eval.SELECTION_SEED
+    assert set(module.FINAL_REPEAT_SEEDS).isdisjoint(
+        module.graph_eval.FINAL_REPEAT_SEEDS
+    )
 
 
 def test_rigid_motion_output_check() -> None:
@@ -32,7 +34,7 @@ def test_rigid_motion_output_check() -> None:
     )
 
 
-def test_stage32_hash_record_is_complete() -> None:
+def test_graph_eval_hash_record_is_complete() -> None:
     assert set(module.STAGE32_OUTPUT_HASHES) == {
         "residue_graph_neural_metrics.csv",
         "residue_graph_neural_paired_comparisons.csv",

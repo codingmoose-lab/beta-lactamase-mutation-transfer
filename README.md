@@ -26,31 +26,33 @@ python scripts/data/16_prepare_processed_tables.py
 python scripts/data/17_define_modelling_tasks.py
 python scripts/data/18_define_evaluation_partitions.py
 python scripts/data/19_prepare_modelling_views.py
-python scripts/data/20_run_baseline_evaluation.py
-python scripts/data/21_calculate_baseline_uncertainty.py
-python scripts/data/22_analyze_homologue_baseline_transfer.py
-python scripts/data/23_evaluate_sequence_neighbourhood.py
-python scripts/data/24_prepare_sequence_plm_embeddings.py
+python scripts/analysis/20_run_baseline_evaluation.py
+python scripts/analysis/21_calculate_baseline_uncertainty.py
+python scripts/analysis/22_analyze_homologue_baseline_transfer.py
+python scripts/analysis/23_evaluate_sequence_neighbourhood.py
+python scripts/analysis/24_prepare_sequence_plm_embeddings.py
 # GPU extraction is performed separately with --extract; see docs/execution.md.
-python scripts/data/25_evaluate_sequence_plm.py
-python scripts/data/26_compare_sequence_models.py
-python scripts/data/27_evaluate_experimental_structure.py
-python scripts/data/28_compare_structure_matched_models.py
-python scripts/data/29_analyze_biological_errors.py
-python scripts/data/30_prepare_residue_graphs.py
-python scripts/data/31_evaluate_residue_neighbourhood.py
-python scripts/data/32_evaluate_residue_graph_neural.py
-python scripts/data/33_evaluate_residue_geometry_neural.py
-python scripts/data/34_evaluate_sequence_residue_graph.py
-python scripts/data/35_analyze_sequence_structure_complementarity.py
-python scripts/data/36_analyze_biological_model_differences.py
-python scripts/data/37_analyze_training_seed_stability.py --postprocess-only --device cpu
-python scripts/data/38_analyze_sequence_model_sensitivity.py
-python scripts/data/39_evaluate_condition_transfer.py
-python scripts/data/40_evaluate_concentration_transfer.py
-python scripts/data/41_analyze_condition_concentration_biology.py
-python scripts/data/42_analyze_matched_homologue_models.py
-python scripts/data/43_evaluate_atomic_local_voxel.py --postprocess-only --device cpu
+python scripts/analysis/25_evaluate_sequence_plm.py
+python scripts/analysis/26_compare_sequence_models.py
+python scripts/analysis/27_evaluate_experimental_structure.py
+python scripts/analysis/28_compare_structure_matched_models.py
+python scripts/analysis/29_analyze_biological_errors.py
+python scripts/analysis/30_prepare_residue_graphs.py
+python scripts/analysis/31_evaluate_residue_neighbourhood.py
+python scripts/analysis/32_evaluate_residue_graph_neural.py
+python scripts/analysis/33_evaluate_residue_geometry_neural.py
+python scripts/analysis/34_evaluate_sequence_residue_graph.py
+python scripts/analysis/35_analyze_sequence_structure_complementarity.py
+python scripts/analysis/36_analyze_biological_model_differences.py
+python scripts/analysis/37_analyze_training_seed_stability.py --postprocess-only --device cpu
+python scripts/analysis/38_analyze_sequence_model_sensitivity.py
+python scripts/analysis/39_evaluate_condition_transfer.py
+python scripts/analysis/40_evaluate_concentration_transfer.py
+python scripts/analysis/41_analyze_condition_concentration_biology.py
+python scripts/analysis/42_analyze_matched_homologue_models.py
+python scripts/analysis/43_evaluate_atomic_local_voxel.py --postprocess-only --device cpu
+python scripts/analysis/44_summarize_model_performance.py
+python scripts/figures/45_generate_manuscript_figures.py
 ```
 
 Acquisition commands that contact external services or import a separately downloaded archive should only be rerun when the corresponding source is intentionally being refreshed. Existing local raw sources are otherwise left unchanged.
@@ -95,7 +97,7 @@ The current programs produce linked tables under:
 ## Scientific conventions
 
 - Raw source files are not modified by the preparation programs.
-- Original experimental scores are preserved unchanged. Primary DMS regression uses a separate `score_analysis` field that applies only the publication-defined lower fitness floor; missing scores are not imputed and scores are not globally standardised.
+- Original experimental scores are preserved unchanged. Primary DMS regression uses a separate `score_analysis` field that applies the reported minimum fitness score; missing scores are not imputed and scores are not globally standardised.
 - Experimental conditions describe the documented assay, even when one condition field is supplied by the publication Methods rather than encoded in a spreadsheet column name.
 - Chen et al. (2020) VIM-2 observations retain their condition-specific 25 °C or 37 °C temperatures.
 - Chen et al. (2022) VIM-2 concentration observations are recorded at 37 °C, as reported in the final Nature Ecology & Evolution Methods.

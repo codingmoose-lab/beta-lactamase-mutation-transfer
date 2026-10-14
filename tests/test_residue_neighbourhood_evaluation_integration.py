@@ -76,7 +76,7 @@ def test_residue_neighbourhood_cli_is_self_contained() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            str(REPO_ROOT / "scripts/data/31_evaluate_residue_neighbourhood.py"),
+            str(REPO_ROOT / "scripts/analysis/31_evaluate_residue_neighbourhood.py"),
             "--help",
         ],
         cwd=REPO_ROOT,

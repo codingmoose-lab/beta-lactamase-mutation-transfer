@@ -14,20 +14,20 @@ Repeated model/scheme metric rows that occur in more than one completed analysis
 
 Paired comparisons are not converted into a model-selection rule. Their confidence intervals are summarized only as intervals that exclude zero or include zero. The direction conventions recorded by the source analyses remain unchanged.
 
-Biological associations remain descriptive rather than causal. The summary retains the reviewed counts of structural associations, primary structural associations, category summaries, and position-concordance rows.
+Biological associations remain descriptive and do not establish biological cause. The summary retains the reviewed counts of structural associations, primary structural associations, category summaries, and position-concordance rows.
 
 The training-seed summary retains the single recorded mean-direction change.
 
 Run the input review with:
 
 ```bash
-python scripts/data/44_summarize_model_performance.py --check-only
+python scripts/analysis/44_summarize_model_performance.py --validate-inputs
 ```
 
 Write the summary tables with:
 
 ```bash
-python scripts/data/44_summarize_model_performance.py
+python scripts/analysis/44_summarize_model_performance.py
 ```
 
 Outputs are written under `data/interim/model_performance_summary/`:

@@ -82,5 +82,5 @@ settings.
 Run:
 
 ```bash
-python scripts/data/26_compare_sequence_models.py
+python scripts/analysis/26_compare_sequence_models.py
 ```

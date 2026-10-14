@@ -69,10 +69,10 @@ The input review verifies:
 Run the input review first:
 
 ```bash
-PYTHONPATH=src python scripts/data/33_evaluate_residue_geometry_neural.py \
+PYTHONPATH=src python scripts/analysis/33_evaluate_residue_geometry_neural.py \
   --repo-root . \
   --device cuda \
-  --check-only
+  --validate-inputs
 ```
 
 Only after that passes should the model be fitted.
@@ -93,7 +93,7 @@ The normal command resumes from verified context checkpoints automatically. If a
 contexts are already present and only the final statistics need to be completed, use:
 
 ```bash
-PYTHONPATH=src python scripts/data/33_evaluate_residue_geometry_neural.py \
+PYTHONPATH=src python scripts/analysis/33_evaluate_residue_geometry_neural.py \
   --repo-root . \
   --device cuda \
   --postprocess-only

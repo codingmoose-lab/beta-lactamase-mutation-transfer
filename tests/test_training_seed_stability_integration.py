@@ -28,7 +28,9 @@ def test_training_seed_stability_input_contract() -> None:
         / "biological_model_difference_summary.json",
     ]
     if not all(path.is_file() for path in required):
-        pytest.skip("Full repository data are not present in this test copy")
+        pytest.skip(
+            "Required generated outputs are unavailable in this test environment"
+        )
 
     summary = module.inspect_training_seed_stability_inputs(REPO_ROOT)
     assert summary["status"] == "PASS"

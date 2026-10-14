@@ -26,7 +26,9 @@ def test_sequence_residue_graph_input_contract() -> None:
         / "residue_graph_neural_predictions.csv",
     )
     if not all(path.is_file() for path in required):
-        pytest.skip("Full repository data are not present in this test copy")
+        pytest.skip(
+            "Required generated outputs are unavailable in this test environment"
+        )
     summary = module.inspect_sequence_residue_graph_inputs(REPO_ROOT)
     assert summary["status"] == "PASS"
     assert summary["evaluation_context_count"] == 17
@@ -34,6 +36,6 @@ def test_sequence_residue_graph_input_contract() -> None:
     assert summary["unique_evaluation_observation_count"] == 109408
     assert sum(record["test_row_count"] for record in summary["contexts"]) == 118204
     assert summary["missing_esmc_evaluation_rows"] == 0
-    assert summary["stage32_population_match"] is True
+    assert summary["graph_eval_population_match"] is True
     assert summary["test_labels_used_for_model_selection"] is False
     assert summary["cross_protein_target_labels_used_for_model_selection"] is False

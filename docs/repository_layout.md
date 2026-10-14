@@ -37,15 +37,15 @@ beta-lactamase-mutation-transfer
 │  │  │  ├─ baseline_summary.json
 │  │  │  ├─ baseline_uncertainty_summary.json
 │  │  │  ├─ homologue_analysis
-│  │  │  │  ├─ discordant_floor_pairs.csv
-│  │  │  │  ├─ discordant_floor_summary.csv
+│  │  │  │  ├─ discordant_minimum_score_pairs.csv
+│  │  │  │  ├─ discordant_minimum_score_summary.csv
 │  │  │  │  ├─ homologue_analysis_summary.json
-│  │  │  │  ├─ homologue_floor_counts.csv
-│  │  │  │  ├─ homologue_floor_sensitivity.csv
+│  │  │  │  ├─ homologue_minimum_score_counts.csv
+│  │  │  │  ├─ homologue_minimum_score_sensitivity.csv
 │  │  │  │  ├─ matched_homologue_metrics.csv
 │  │  │  │  ├─ matched_homologue_predictions.csv
-│  │  │  │  ├─ nonfloor_matched_metrics.csv
-│  │  │  │  ├─ nonfloor_paired_comparisons.csv
+│  │  │  │  ├─ above_minimum_matched_metrics.csv
+│  │  │  │  ├─ above_minimum_paired_comparisons.csv
 │  │  │  │  └─ paired_baseline_comparisons.csv
 │  │  │  ├─ homologue_direct_transfer_intervals.csv
 │  │  │  ├─ homologue_direct_transfer_metrics.csv

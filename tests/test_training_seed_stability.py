@@ -102,4 +102,4 @@ def test_prediction_frame_records_actual_training_seed() -> None:
     )
     assert frame.loc[0, "seed_set_index"] == 4
     assert frame.loc[0, "training_seed"] == 32104
-    assert frame.loc[0, "record_source"] == "stage37_additional_fit"
+    assert frame.loc[0, "record_source"] == "seed_eval_additional_fit"

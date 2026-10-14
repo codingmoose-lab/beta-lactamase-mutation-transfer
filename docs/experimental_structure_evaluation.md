@@ -76,5 +76,5 @@ The command writes:
 Run:
 
 ```bash
-python scripts/data/27_evaluate_experimental_structure.py
+python scripts/analysis/27_evaluate_experimental_structure.py
 ```

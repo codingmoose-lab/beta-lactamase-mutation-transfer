@@ -91,7 +91,7 @@ coverage; it does not determine graph topology.
 Running
 
 ```bash
-python scripts/data/30_prepare_residue_graphs.py
+python scripts/analysis/30_prepare_residue_graphs.py
 ```
 
 writes:

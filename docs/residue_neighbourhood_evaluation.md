@@ -56,7 +56,7 @@ The directional NDM-1 to VIM-2 and VIM-2 to NDM-1 analyses provide the stronger 
 ## Command
 
 ```bash
-python scripts/data/31_evaluate_residue_neighbourhood.py
+python scripts/analysis/31_evaluate_residue_neighbourhood.py
 ```
 
 Outputs are written to `data/interim/residue_neighbourhood_evaluation/`.

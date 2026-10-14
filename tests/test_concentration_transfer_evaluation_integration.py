@@ -4,14 +4,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from betalactamase_transfer import concentration_transfer_evaluation as stage40
+from betalactamase_transfer import (
+    concentration_transfer_evaluation as concentration_eval,
+)
 
 
 def test_concentration_scheme_inventory() -> None:
-    assert len(stage40.CONCENTRATION_SCHEME_IDS) == 7
-    assert stage40.CONDITION_MODE == "log2_concentration"
-    assert stage40.CONCENTRATION_SCHEME_IDS[0].endswith("_4")
-    assert stage40.CONCENTRATION_SCHEME_IDS[-1].endswith("_256")
+    assert len(concentration_eval.CONCENTRATION_SCHEME_IDS) == 7
+    assert concentration_eval.CONDITION_MODE == "log2_concentration"
+    assert concentration_eval.CONCENTRATION_SCHEME_IDS[0].endswith("_4")
+    assert concentration_eval.CONCENTRATION_SCHEME_IDS[-1].endswith("_256")
 
 
 def test_design_summary_uses_numeric_dose_order(tmp_path: Path) -> None:
@@ -38,12 +40,12 @@ def test_design_summary_uses_numeric_dose_order(tmp_path: Path) -> None:
                     else "interpolation"
                 ),
             }
-            for scheme_id in stage40.CONCENTRATION_SCHEME_IDS
+            for scheme_id in concentration_eval.CONCENTRATION_SCHEME_IDS
         ]
     )
-    primary = stage40._primary_reference_by_scheme(schemes)
-    secondary = stage40._secondary_reference_by_scheme(schemes)
-    summary = stage40._concentration_design_summary(
+    primary = concentration_eval._primary_reference_by_scheme(schemes)
+    secondary = concentration_eval._secondary_reference_by_scheme(schemes)
+    summary = concentration_eval._concentration_design_summary(
         tmp_path, schemes, primary, secondary
     )
     row4 = summary[summary["target_concentration"].eq(4.0)].iloc[0]

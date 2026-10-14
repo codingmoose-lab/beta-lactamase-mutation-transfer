@@ -114,5 +114,5 @@ The command writes:
 Run:
 
 ```bash
-python scripts/data/29_analyze_biological_errors.py
+python scripts/analysis/29_analyze_biological_errors.py
 ```

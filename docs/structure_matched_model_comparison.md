@@ -52,5 +52,5 @@ The command writes:
 Run:
 
 ```bash
-python scripts/data/28_compare_structure_matched_models.py
+python scripts/analysis/28_compare_structure_matched_models.py
 ```

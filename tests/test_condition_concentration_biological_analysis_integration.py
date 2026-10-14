@@ -20,11 +20,14 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def test_live_stage39_stage40_inputs_are_unchanged() -> None:
+def test_live_condition_eval_concentration_eval_inputs_are_unchanged() -> None:
     root = Path.cwd()
     first = root / next(iter(EXPECTED_INPUT_HASHES))
     if not first.is_file():
-        pytest.skip("Live Stage-39/40 outputs are not present in this test environment")
+        pytest.skip(
+            "Live condition- and concentration-transfer outputs are not present "
+            "in this test environment"
+        )
 
     summary = review_condition_concentration_inputs(root)
     assert summary["status"] == "PASS"

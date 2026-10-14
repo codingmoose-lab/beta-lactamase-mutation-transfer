@@ -20,7 +20,9 @@ def test_sequence_structure_complementarity_input_contract() -> None:
         / "sequence_residue_graph_predictions.csv",
     )
     if not all(path.is_file() for path in required):
-        pytest.skip("Full repository data are not present in this test copy")
+        pytest.skip(
+            "Required generated outputs are unavailable in this test environment"
+        )
     summary = module.inspect_sequence_structure_complementarity_inputs(REPO_ROOT)
     assert summary["status"] == "PASS"
     assert summary["matched_final_prediction_count"] == 118204
