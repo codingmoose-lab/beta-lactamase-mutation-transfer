@@ -49,3 +49,4 @@ figures/**/*.zip
 
 # Local repository archives
 repository.zip
+figures/generation_report.json
