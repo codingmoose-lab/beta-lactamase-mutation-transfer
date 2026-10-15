@@ -1,19 +1,3 @@
-"""Harmonize supplementary figure colors for publication.
-
-This script changes graphical styling only.
-
-It does not recalculate study results, alter plotted coordinates,
-change labels, or rerun any analysis stage.
-
-Vector PDFs are converted to SVG with Inkscape, publication colors are
-substituted consistently across graphical objects, and the final PDF and
-PNG files are exported from the updated SVG.
-
-For sequential blue heatmaps, the complete blue scale is mapped to the
-study's light-cream -> gold -> coral -> deep-rust sequential palette while
-preserving the original ordering of color intensity.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -385,12 +369,8 @@ def main() -> None:
 
     supp = args.root / "figures" / "supplementary"
 
-    # S07 is the only supplementary figure in the current set
-    # using a continuous blue heatmap/colorbar.
-    #
-    # It therefore receives a monotonic sequential transformation.
-    #
-    # The other figures use categorical/default plotting colors.
+    # Continuous heatmaps use a sequential palette; categorical plots use
+    # the corresponding categorical replacements.
     sequential: set[str] = set()
 
     stems = [

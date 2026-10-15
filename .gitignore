@@ -35,3 +35,17 @@ data/*.zip
 
 # Local research verification files.
 audits/
+
+# Editable and intermediate figure files
+figures/**/*.svg
+figures/**/*.png
+figures/components/
+
+# Alternative publication figures
+figures/main/*alternative*
+
+# Figure archives
+figures/**/*.zip
+
+# Local repository archives
+repository.zip

@@ -29,7 +29,7 @@ D_CSV = AUDITS / "figure_6_panel_D_values.csv"
 
 OUT_STEM = "figure_6_condition_and_concentration"
 
-# Warm manuscript palette requested for Figure 6.
+# Figure 6 color palette.
 DEEP_RED = "#A94438"
 RUST = "#C76B4F"
 CORAL = "#E29A7F"
