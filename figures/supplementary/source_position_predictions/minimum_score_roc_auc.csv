@@ -1,0 +1,11 @@
+direction,method,n_minimum,n_above_minimum,roc_auc_minimum
+NDM-1_to_VIM-2,ESM-C site-difference Ridge,917,596,0.8576002868999436
+NDM-1_to_VIM-2,source assay mean,917,596,0.5065750953283614
+NDM-1_to_VIM-2,source mutant mean,917,596,0.5946852151383634
+NDM-1_to_VIM-2,source substitution mean,917,596,0.7103280320274019
+NDM-1_to_VIM-2,source identity Ridge,917,596,0.6429870529081554
+VIM-2_to_NDM-1,ESM-C site-difference Ridge,847,666,0.8133617679072225
+VIM-2_to_NDM-1,source assay mean,847,666,0.49773533864442954
+VIM-2_to_NDM-1,source mutant mean,847,666,0.5614365841638569
+VIM-2_to_NDM-1,source substitution mean,847,666,0.6120488847761575
+VIM-2_to_NDM-1,source identity Ridge,847,666,0.5710208437481165
