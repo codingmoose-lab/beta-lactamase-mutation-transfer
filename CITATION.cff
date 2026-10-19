@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the software record and the associated study when available."
+title: "Beta-lactamase mutation-effect transfer analysis"
+type: software
+authors:
+  - family-names: Mostafa
+    given-names: Mohammed
+    orcid: "https://orcid.org/0009-0009-2690-2057"
+  - family-names: Mahadi
+    given-names: Mahamodul Hasan
+    orcid: "https://orcid.org/0009-0002-1601-8793"
+license: MIT
