@@ -495,7 +495,7 @@ def _evaluation_components(root: Path, out: Path) -> list[dict[str, str]]:
 
 
 def figure1(root: Path, out: Path) -> None:
-    """Generate Figure 1 scientific components for manual journal assembly."""
+    """Generate the Figure 1 component graphics."""
     root = Path(root)
     component_dir = root / "figures/components/figure_1"
     component_dir.mkdir(parents=True, exist_ok=True)
