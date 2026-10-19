@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data/interim/matched_homologue_model_analysis"
 METRICS = DATA / "matched_homologue_model_metrics.csv"
 COMPARISONS = DATA / "matched_homologue_model_comparisons.csv"
-ASSOCIATIONS = DATA / "matched_homologue_background_associations.csv"
 PREDICTIONS = DATA / "matched_homologue_model_predictions.csv"
 
 COMPONENTS = ROOT / "figures/components/figure_4"
@@ -27,7 +26,7 @@ MAIN.mkdir(parents=True, exist_ok=True)
 AUDITS.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------
-# Journal-size / typography
+# Figure dimensions and typography
 # ---------------------------------------------------------------------
 
 MM_TO_INCH = 1 / 25.4
@@ -108,6 +107,15 @@ MODEL_ORDER = [
 
 FOCAL_MODEL = "sequence_residue_graph_neural_regressor"
 
+PANEL_D_DIRECTIONS = {
+    direction: (style["label"], style["color"])
+    for direction, style in DIRECTION_STYLE.items()
+}
+PANEL_D_POPULATIONS = {
+    "all_shared_wild_type_pairs": ("All paired substitutions", 1513, 81),
+    "both_above_minimum": ("Both effects above −4", 478, 63),
+}
+
 ALL_POP = "all_shared_wild_type_pairs"
 ABOVE_POP = "both_above_minimum"
 REFERENCE = "direct_homologue_source_effect"
@@ -179,7 +187,6 @@ def check_required_columns(
 
 metrics = pd.read_csv(METRICS)
 comparisons = pd.read_csv(COMPARISONS)
-associations = pd.read_csv(ASSOCIATIONS)
 predictions = pd.read_csv(PREDICTIONS)
 
 check_required_columns(
@@ -214,22 +221,6 @@ check_required_columns(
     "comparisons",
 )
 
-check_required_columns(
-    associations,
-    {
-        "direction",
-        "population",
-        "model_id",
-        "association_id",
-        "spearman",
-        "ci_lower",
-        "ci_upper",
-        "n_pairs",
-        "n_homologue_positions",
-    },
-    "associations",
-)
-
 # Mutation-level table column names were already audited. We still verify
 # the fields needed by panel D rather than assuming them silently.
 required_prediction_columns = {
@@ -238,7 +229,6 @@ required_prediction_columns = {
     "target_observation_id",
     "target_effect",
     "absolute_error",
-    "absolute_background_difference_analysis",
 }
 
 check_required_columns(
@@ -248,7 +238,7 @@ check_required_columns(
 )
 
 # ---------------------------------------------------------------------
-# Scientific checks before drawing
+# Validate model and population inputs
 # ---------------------------------------------------------------------
 
 directions = set(metrics["direction"])
@@ -499,143 +489,196 @@ def draw_difference_panel(
 # ---------------------------------------------------------------------
 
 
-def draw_panel_d(ax: plt.Axes) -> pd.DataFrame:
-    sub = predictions[predictions["model_id"] == FOCAL_MODEL].copy()
-
-    if len(sub) != 3026:
-        raise ValueError(
-            "Panel D expected 3,026 sequence+graph prediction rows "
-            f"(1,513 per direction), found {len(sub)}"
-        )
-
-    records = []
-
-    # Draw a light point cloud for each direction.
-    # Yellow/gold is not used for tiny raw points because it has poor
-    # Keep prediction-direction colors identical across all panels.
-    point_style = {
-        direction: {
-            "color": DIRECTION_STYLE[direction]["color"],
-            "marker": "o",
-        }
-        for direction in DIRECTION_STYLE
+def prepare_rows(
+    predictions: pd.DataFrame, comparisons: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    required = {
+        "direction",
+        "model_id",
+        "target_observation_id",
+        "homologue_position_id",
+        "target_effect",
+        "source_effect",
+        "y_pred",
+        "minimum_score_class",
     }
+    missing = required - set(predictions.columns)
+    if missing:
+        raise ValueError(f"Prediction table lacks required columns: {sorted(missing)}")
+    comparison_required = {
+        "direction",
+        "population",
+        "model_id",
+        "reference_model_id",
+        "metric",
+        "paired_difference",
+        "ci_lower",
+        "ci_upper",
+    }
+    missing = comparison_required - set(comparisons.columns)
+    if missing:
+        raise ValueError(f"Comparison table lacks required columns: {sorted(missing)}")
 
-    for direction in DIRECTION_STYLE:
-        d = sub[sub["direction"] == direction].copy()
-
-        x = d["absolute_background_difference_analysis"].to_numpy(float)
-        y = d["absolute_error"].to_numpy(float)
-
-        ax.scatter(
-            x,
-            y,
-            s=8,
-            color=point_style[direction]["color"],
-            alpha=0.16,
-            linewidth=0,
-            rasterized=True,
-            zorder=1,
+    selected = predictions.loc[predictions["model_id"].eq(FOCAL_MODEL)].copy()
+    if set(selected["direction"]) != set(PANEL_D_DIRECTIONS):
+        raise ValueError(
+            "Sequence–graph predictions do not cover both protein directions"
         )
-
-        # Binned median summary. This is descriptive and uses the plotted
-        # observations; it is not a fitted prediction model.
-        quantiles = np.unique(
-            np.quantile(
-                x,
-                np.linspace(0, 1, 9),
-            )
-        )
-
-        if len(quantiles) >= 3:
-            bins = pd.cut(
-                x,
-                bins=quantiles,
-                include_lowest=True,
-                duplicates="drop",
-            )
-
-            summary = (
-                pd.DataFrame(
-                    {
-                        "x": x,
-                        "y": y,
-                        "bin": bins,
-                    }
-                )
-                .groupby("bin", observed=True)
-                .agg(
-                    x_median=("x", "median"),
-                    y_median=("y", "median"),
-                )
-                .dropna()
-            )
-
-            summary_color = DIRECTION_STYLE[direction]["color"]
-
-            ax.plot(
-                summary["x_median"],
-                summary["y_median"],
-                color=summary_color,
-                linewidth=1.8,
-                zorder=3,
-            )
-
-        assoc = associations[
-            (
-                associations["association_id"]
-                == "absolute_error_vs_absolute_background_difference"
-            )
-            & (associations["population"] == ALL_POP)
-            & (associations["model_id"] == FOCAL_MODEL)
-            & (associations["direction"] == direction)
-        ]
-
-        if len(assoc) != 1:
-            raise ValueError(f"Panel D association row missing for {direction}")
-
-        assoc = assoc.iloc[0]
-
-        records.append(
-            {
-                "panel": "D",
-                "direction": direction,
-                "population": ALL_POP,
-                "model_id": FOCAL_MODEL,
-                "metric": "spearman_error_vs_homologue_difference",
-                "estimate": float(assoc["spearman"]),
-                "ci_lower": float(assoc["ci_lower"]),
-                "ci_upper": float(assoc["ci_upper"]),
-            }
-        )
-
-    ax.set_xlabel("Absolute NDM-1/VIM-2 mutation-effect difference")
-    ax.set_ylabel("Absolute prediction error")
-
-    clean_axes(ax, "both")
-    panel_letter(ax, "D")
-
-    assoc_lookup = {row["direction"]: row for row in records}
-
-    text_lines = []
-
-    for direction in DIRECTION_STYLE:
-        row = assoc_lookup[direction]
-        short = "NDM→VIM" if direction == "NDM-1_to_VIM-2" else "VIM→NDM"
-        text_lines.append(f"{short}: ρ = {row['estimate']:.2f}")
-
-    ax.text(
-        0.98,
-        0.05,
-        "\n".join(text_lines),
-        transform=ax.transAxes,
-        ha="right",
-        va="bottom",
-        fontsize=6.5,
-        color=BLACK,
+    if selected.duplicated(["direction", "target_observation_id"]).any():
+        raise ValueError("Duplicate target observations in sequence–graph predictions")
+    for field in ("target_effect", "source_effect", "y_pred"):
+        selected[field] = pd.to_numeric(selected[field], errors="raise")
+        if not np.isfinite(selected[field].to_numpy(dtype=float)).all():
+            raise ValueError(f"Non-finite {field} in sequence–graph predictions")
+    selected["direct_absolute_error"] = abs(
+        selected["target_effect"] - selected["source_effect"]
+    )
+    selected["model_absolute_error"] = abs(
+        selected["target_effect"] - selected["y_pred"]
+    )
+    selected["paired_improvement"] = (
+        selected["direct_absolute_error"] - selected["model_absolute_error"]
     )
 
-    return pd.DataFrame(records)
+    records: list[dict[str, object]] = []
+    for population, (label, n_pairs, n_positions) in PANEL_D_POPULATIONS.items():
+        for direction in PANEL_D_DIRECTIONS:
+            d = selected.loc[selected["direction"].eq(direction)]
+            if population == "both_above_minimum":
+                d = d.loc[d["minimum_score_class"].eq("both_above_minimum")]
+            if len(d) != n_pairs or d["homologue_position_id"].nunique() != n_positions:
+                raise ValueError(
+                    f"{direction}/{population}: expected {n_pairs} substitutions "
+                    f"at {n_positions} positions; observed {len(d)} and "
+                    f"{d['homologue_position_id'].nunique()}"
+                )
+            saved = comparisons.loc[
+                comparisons["direction"].eq(direction)
+                & comparisons["population"].eq(population)
+                & comparisons["model_id"].eq(FOCAL_MODEL)
+                & comparisons["reference_model_id"].eq(REFERENCE)
+                & comparisons["metric"].eq("mae")
+            ]
+            if len(saved) != 1:
+                raise ValueError(
+                    f"Missing source-model MAE comparison for {direction}/{population}"
+                )
+            saved = saved.iloc[0]
+            mean = float(d["paired_improvement"].mean())
+            point = float(saved["paired_difference"])
+            low, high = float(saved["ci_lower"]), float(saved["ci_upper"])
+            if not (np.isfinite([point, low, high]).all() and low <= high):
+                raise ValueError(
+                    f"Invalid position-bootstrap interval for {direction}/{population}"
+                )
+            if not np.isclose(mean, point, rtol=0, atol=1e-9):
+                raise ValueError(
+                    "Recalculated paired MAE difference does not match saved value: "
+                    f"{direction}/{population}"
+                )
+            records.append(
+                {
+                    "population": population,
+                    "population_label": label,
+                    "direction": direction,
+                    "n_substitutions": n_pairs,
+                    "n_positions": n_positions,
+                    "mae_improvement": mean,
+                    "ci_lower": low,
+                    "ci_upper": high,
+                    "resampling_unit": "homologue_position_id",
+                }
+            )
+    return selected, pd.DataFrame.from_records(records)
+
+
+def draw_in_axes(
+    axes: tuple[plt.Axes, plt.Axes] | np.ndarray,
+    rows: pd.DataFrame,
+    *,
+    add_legend: bool = True,
+    composite: bool = False,
+) -> None:
+    """Plot measured-source and sequence–graph errors on matched observations."""
+    maximum = float(
+        max(rows["direct_absolute_error"].max(), rows["model_absolute_error"].max())
+    )
+    limit = max(1.0, maximum * 1.055)
+    for ax, (population, (heading, _, _)) in zip(
+        axes, PANEL_D_POPULATIONS.items(), strict=True
+    ):
+        ax.set_facecolor("white")
+        ax.plot(
+            [0, limit],
+            [0, limit],
+            color="#777777",
+            lw=0.9,
+            linestyle=(0, (4, 3)),
+            zorder=1,
+        )
+        for direction, (direction_label, color) in PANEL_D_DIRECTIONS.items():
+            selected = rows.loc[rows["direction"].eq(direction)]
+            if population == "both_above_minimum":
+                selected = selected.loc[
+                    selected["minimum_score_class"].eq("both_above_minimum")
+                ]
+            selected = selected.sort_values(
+                ["homologue_position_id", "target_observation_id"]
+            )
+            ax.scatter(
+                selected["direct_absolute_error"],
+                selected["model_absolute_error"],
+                s=9.0,
+                alpha=0.22,
+                color=color,
+                edgecolors="none",
+                rasterized=False,
+                label=direction_label,
+                zorder=2,
+            )
+        ax.set_xlim(0, limit)
+        ax.set_ylim(0, limit)
+        ax.set_aspect("equal", adjustable="box")
+        ax.set_title(heading, fontsize=9, pad=9, weight="normal")
+        ax.set_xlabel("Direct source-effect absolute error", labelpad=7)
+        ax.grid(color="#E9E7E2", lw=0.5, zorder=0)
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.tick_params(width=0.65, length=3)
+    for ax in axes:
+        ax.set_ylabel("Sequence–graph model absolute error", labelpad=7)
+    if add_legend:
+        handles, labels = axes[0].get_legend_handles_labels()
+        axes[0].figure.legend(
+            handles,
+            labels,
+            loc="upper center",
+            bbox_to_anchor=(0.52, 0.965),
+            ncol=2,
+            frameon=False,
+            fontsize=8,
+            markerscale=2,
+        )
+    if not composite:
+        axes[0].figure.subplots_adjust(
+            left=0.115, right=0.985, bottom=0.17, top=0.78, wspace=0.26
+        )
+
+
+def draw_panel_d(axes: tuple[plt.Axes, plt.Axes]) -> pd.DataFrame:
+    """Compare model and source-effect absolute errors."""
+    frame, summary = prepare_rows(predictions, comparisons)
+    draw_in_axes(axes, frame, add_legend=False, composite=True)
+    panel_letter(axes[0], "D")
+    for ax in axes:
+        ax.set_ylabel("Sequence–graph model absolute error", labelpad=3)
+        ax.set_xlabel("Direct source-effect absolute error", labelpad=3)
+        ax.tick_params(labelsize=5.8)
+        ax.title.set_fontsize(7)
+    records = summary.rename(columns={"mae_improvement": "estimate"}).copy()
+    records["panel"] = "D"
+    records["model_id"] = FOCAL_MODEL
+    records["metric"] = "mae_improvement_vs_direct_source"
+    return records
 
 
 # ---------------------------------------------------------------------
@@ -660,10 +703,29 @@ fig_c.tight_layout()
 save_component(fig_c, "C_mae_difference_vs_experimental_reference")
 plt.close(fig_c)
 
-fig_d, ax_d = plt.subplots(figsize=(7.0, 2.75))
-values_d = draw_panel_d(ax_d)
-fig_d.tight_layout()
-save_component(fig_d, "D_error_vs_homologue_difference")
+fig_d, axes_d = plt.subplots(1, 2, figsize=(7.7, 3.55), sharex=True, sharey=True)
+values_d = draw_panel_d(tuple(axes_d))
+fig_d.legend(
+    handles=[
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="none",
+            markerfacecolor=DIRECTION_STYLE[d]["color"],
+            markeredgecolor="none",
+            markersize=4,
+            label=DIRECTION_STYLE[d]["label"],
+        )
+        for d in DIRECTION_STYLE
+    ],
+    loc="upper center",
+    ncol=2,
+    frameon=False,
+    fontsize=7,
+)
+fig_d.subplots_adjust(left=0.12, right=0.985, bottom=0.19, top=0.78, wspace=0.27)
+save_component(fig_d, "D_direct_vs_model_absolute_error")
 plt.close(fig_d)
 
 # ---------------------------------------------------------------------
@@ -693,12 +755,14 @@ gs = fig.add_gridspec(
 ax_a = fig.add_subplot(gs[0, 0])
 ax_b = fig.add_subplot(gs[0, 1])
 ax_c = fig.add_subplot(gs[0, 2])
-ax_d = fig.add_subplot(gs[1, :])
+d_subgrid = gs[1, :].subgridspec(1, 2, wspace=0.38)
+ax_d_left = fig.add_subplot(d_subgrid[0, 0])
+ax_d_right = fig.add_subplot(d_subgrid[0, 1], sharex=ax_d_left, sharey=ax_d_left)
 
 final_a = draw_panel_a(ax_a)
 final_b = draw_difference_panel(ax_b, "spearman", "B")
 final_c = draw_difference_panel(ax_c, "mae", "C")
-final_d = draw_panel_d(ax_d)
+final_d = draw_panel_d((ax_d_left, ax_d_right))
 
 # B/C share the model labels conceptually. Remove duplicate y labels
 # from C while keeping B readable.
@@ -752,7 +816,6 @@ ap("SOURCE FILES")
 for source in [
     METRICS,
     COMPARISONS,
-    ASSOCIATIONS,
     PREDICTIONS,
 ]:
     ap(f"{source.relative_to(ROOT)} | SHA256={sha256(source)}")
@@ -769,6 +832,8 @@ ap("PASS: positive MAE improvement means lower model MAE")
 ap("PASS: ΔSpearman = model rho - reference rho")
 ap("PASS: positive ΔSpearman means higher model rank agreement")
 ap("PASS: panel D uses sequence + graph predictions for both directions")
+ap("PASS: panel D compares direct and fitted model absolute errors")
+ap("PASS: panel D includes all paired substitutions and both-above-minimum subset")
 ap("PASS: panel D uses 1,513 substitutions per direction")
 ap("PASS: no model fitting performed")
 ap("PASS: no source result table modified")
@@ -778,7 +843,7 @@ ap("FIGURE CONTENT")
 ap("A: directional Spearman comparison")
 ap("B: paired ΔSpearman versus measured source-homologue effect")
 ap("C: paired MAE improvement versus measured source-homologue effect")
-ap("D: absolute prediction error versus experimental homologue difference")
+ap("D: direct source-effect absolute error versus sequence–graph absolute error")
 
 ap()
 ap("TYPOGRAPHY")
