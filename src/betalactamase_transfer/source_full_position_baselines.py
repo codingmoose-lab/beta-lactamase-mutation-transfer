@@ -269,7 +269,9 @@ def ridge_fit(train: pd.DataFrame, alpha: float) -> np.ndarray:
     return coefficients
 
 
-def alpha_selection(train: pd.DataFrame) -> tuple[float, list[dict]]:
+def alpha_selection(
+    train: pd.DataFrame, alphas: tuple[float, ...] = RIDGE_ALPHAS
+) -> tuple[float, list[dict]]:
     # Inner folds group SOURCE residue positions, not source mutation rows.
     sites = sorted(set(train.assay_position.astype(str)))
     if len(sites) < 6:
@@ -281,7 +283,7 @@ def alpha_selection(train: pd.DataFrame) -> tuple[float, list[dict]]:
     }
     fold_role = train.assay_position.astype(str).map(fold_map)
     errors = []
-    for alpha in RIDGE_ALPHAS:
+    for alpha in alphas:
         total_abs = 0.0
         total_n = 0
         for fold in range(3):

@@ -171,7 +171,7 @@ def test_full_source_only_direction_execution(tmp_path, monkeypatch) -> None:
         / "source_position_esmc_test_output"
         / "source_position_withheld_esmc_reference_source_cv.csv"
     )
-    assert len(pd.read_csv(reference_cv)) == 40
+    assert len(pd.read_csv(reference_cv)) == 110
 
 
 def test_float16_feature_statistics_use_float64() -> None:
@@ -226,3 +226,23 @@ def test_esmc_cv_does_not_select_invalid_candidate(monkeypatch) -> None:
     )
     with pytest.raises(PositionWithheldESMCError, match="source CV"):
         choose_alpha(np.ones((54, 3)), np.ones(54), np.repeat(np.arange(18), 3))
+
+
+def test_extended_ridge_penalties_do_not_change_default_source_baseline() -> None:
+    from betalactamase_transfer.source_full_position_baselines import RIDGE_ALPHAS
+    from betalactamase_transfer.source_position_withheld_esmc import RIDGE_PENALTIES
+
+    assert RIDGE_ALPHAS == (0.1, 1.0, 10.0, 100.0)
+    assert RIDGE_PENALTIES == (
+        0.001,
+        0.01,
+        0.1,
+        1.0,
+        10.0,
+        100.0,
+        1000.0,
+        10000.0,
+        100000.0,
+        1000000.0,
+        10000000.0,
+    )

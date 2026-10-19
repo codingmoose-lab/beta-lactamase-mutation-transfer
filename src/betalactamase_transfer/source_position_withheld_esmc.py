@@ -27,7 +27,19 @@ from .source_full_position_baselines import (
 
 EMBEDDINGS = Path("data/interim/sequence_plm_embeddings")
 LAYERS = (36,)
-RIDGE_PENALTIES = (1.0, 10.0, 100.0, 1000.0)
+RIDGE_PENALTIES = (
+    0.001,
+    0.01,
+    0.1,
+    1.0,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    100000.0,
+    1000000.0,
+    10000000.0,
+)
 MODEL = "esmc_site_delta_source_position_ridge"
 REFERENCE = "source_assay_identity_ridge"
 
@@ -299,7 +311,9 @@ def run(root: Path, output: Path, repetitions: int = 1000) -> dict:
             )
             estimate = fit_esmc(x_source[fit], scores[fit], x_target[heldout], alpha)
             # This reference is independently fitted on identical source rows.
-            baseline_alpha, baseline_cv = alpha_selection(source.loc[fit])
+            baseline_alpha, baseline_cv = alpha_selection(
+                source.loc[fit], alphas=RIDGE_PENALTIES
+            )
             baseline_cv_mae = next(
                 item["source_cv_mae"]
                 for item in baseline_cv
@@ -392,6 +406,8 @@ def run(root: Path, output: Path, repetitions: int = 1000) -> dict:
         "model_id": MODEL,
         "reference_model_id": REFERENCE,
         "esmc_hidden_state_index": LAYERS[0],
+        "esmc_penalty_candidates": list(RIDGE_PENALTIES),
+        "reference_penalty_candidates": list(RIDGE_PENALTIES),
         "prediction_count": len(frame),
         "source_only_parameter_selection": True,
         "target_effects_used_for_fitting": False,
