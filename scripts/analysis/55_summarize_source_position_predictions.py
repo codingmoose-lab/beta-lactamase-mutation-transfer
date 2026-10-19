@@ -100,7 +100,7 @@ def main() -> None:
             args.existing_dir, "target_score_stratified_comparisons.csv", groups
         )
     if not args.write:
-        print("READ-ONLY REVIEW PASS: no files written")
+        print("NUMERICAL COMPARISON PASS: no files written")
         return
     output.mkdir(parents=True, exist_ok=False)
     files = {
@@ -138,7 +138,7 @@ def main() -> None:
     (output / "source_position_table_summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    print(f"AUTHOR-RUN OUTPUTS WRITTEN: {output}")
+    print(f"NUMERICAL TABLES WRITTEN: {output}")
 
 
 if __name__ == "__main__":
