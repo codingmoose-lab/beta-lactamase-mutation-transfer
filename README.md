@@ -52,7 +52,7 @@ python scripts/analysis/41_analyze_condition_concentration_biology.py
 python scripts/analysis/42_analyze_matched_homologue_models.py
 python scripts/analysis/43_evaluate_atomic_local_voxel.py --postprocess-only --device cpu
 python scripts/analysis/44_summarize_model_performance.py
-python scripts/figures/45_generate_manuscript_figures.py
+python scripts/figures/list_figure_sources.py
 ```
 
 Acquisition commands that contact external services or import a separately downloaded archive should only be rerun when the corresponding source is intentionally being refreshed. Existing local raw sources are otherwise left unchanged.
