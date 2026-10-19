@@ -325,11 +325,19 @@ def score_predictions(frame: pd.DataFrame, *, repetitions: int = 1000) -> pd.Dat
 
 def run_analysis(repo_root: Path, output_dir: Path, *, repetitions: int = 1000) -> dict:
     if output_dir.resolve().is_relative_to(repo_root.resolve()):
-        raise PositionWithheldEvaluationError(
-            "Reports must be saved outside repository"
+        allowed_output = (
+            repo_root.resolve()
+            / "data"
+            / "interim"
+            / "position_withheld_homologue_baselines"
         )
-    if output_dir.exists() and any(output_dir.iterdir()):
-        raise PositionWithheldEvaluationError("Output directory is not empty")
+        if output_dir.resolve() != allowed_output:
+            raise PositionWithheldEvaluationError(
+                "Repository output must be saved in "
+                "data/interim/position_withheld_homologue_baselines"
+            )
+    if output_dir.exists():
+        raise PositionWithheldEvaluationError("Output directory already exists")
     matched, source_hash = load_matched_data(repo_root)
     predictions, folds = calculate_heldout_predictions(matched)
     metrics = score_predictions(predictions, repetitions=repetitions)

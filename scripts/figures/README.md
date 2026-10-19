@@ -11,7 +11,7 @@ The figure-generation scripts are listed below. The final PDFs in `figures/main/
 | 5 | `scripts/figures/generate_figure5_model_differences.py` |
 | 6 | `scripts/figures/generate_figure6_condition_and_concentration.py` |
 
-`list_figure_sources.py` lists figure sources; it does **not** generate or replace figures. `recolor_supplementary_figures.py` and `prepare_supplementary_figures.py` modify supplementary graphics when invoked with their applicable options; do not run them when inspecting the published figures. `pymol/render_beta_lactamase_structures.pml` specifies structural selections and rendering commands using PDB entries 3SPU and 5YD7; these input structures are not included in the repository.
+`list_figure_sources.py` lists figure sources without generating or modifying figures. `pymol/render_beta_lactamase_structures.pml` specifies structural selections and rendering commands using PDB entries 3SPU and 5YD7; these input structures are not included in the repository.
 
 The scripts read processed research tables and, for some panels, structural renderings. Their input paths are specified in the individual source files. The source datasets and preparation steps are described in the repository documentation. Figure component files are local working outputs and are not part of the public repository.
 
