@@ -1,98 +1,96 @@
 # Beta-lactamase mutation transfer
 
-Computational study of mutation effects across NDM-1 and VIM-2 under antibiotic, concentration, and temperature conditions. The repository prepares published deep-mutational-scanning measurements, maps residue numbering between assay and reference sources, prepares experimental and AlphaFold structures, and records catalytic and AMR annotations for mutation-effect analyses that use sequence and structural information.
+Computational analysis of mutation-effect prediction and transfer between the B1 metallo-β-lactamases NDM-1 and VIM-2. Published deep mutational scanning measurements are compared across homologous residue positions, antibiotic conditions, temperatures, and ampicillin concentrations. The study examines amino-acid representations, ESM-C and ESM-2, experimental structural descriptors, residue graphs, residue geometry, local atomic voxels, and sequence–graph models.
 
-## Reproducible research workflow
+## Repository organization
 
-Run the repository-controlled commands from the repository root in numerical order where their required local inputs are available:
+- `scripts/data/`: source acquisition, assay and residue-number mapping, structure preparation, and evaluation definitions (commands 01–19).
+- `scripts/analysis/`: baseline, sequence, structural and neural evaluations; transfer studies; source-position holdouts; and numerical verification (commands 20–55).
+- `scripts/figures/`: scripts for main figures 2–6, Supplementary Figure S12, and figure-source inspection. Figure 1 is assembled separately from recorded scientific components.
+- `src/betalactamase_transfer/`: reusable Python implementations.
+- `tests/`: unit and integration tests.
+- `docs/`: methodological descriptions, scientific checks, and [repository layout](docs/repository_layout.md).
+- `figures/main/`: six main figure PDFs; `figures/supplementary/`: supplementary figure PDFs and their source tables.
+- `data/raw/`, `data/interim/`, and `data/processed/`: local scientific inputs and outputs; see [data/README.md](data/README.md) and [RIGHTS.md](RIGHTS.md) before sharing any files.
 
-```bash
-python scripts/data/01_map_reference_sequences.py
-python scripts/data/02_describe_source_tables.py
-python scripts/data/03_extract_mutation_measurements.py
-python scripts/data/04_define_assays_and_conditions.py
-python scripts/data/05_prepare_protein_structures.py
-python scripts/data/06_acquire_alphafold_models.py
-python scripts/data/07_prepare_alphafold_models.py
-python scripts/data/08_acquire_mcsa_annotations.py
-python scripts/data/09_acquire_mcsa_reference_sequences.py
-python scripts/data/10_prepare_mcsa_correspondence.py
-python scripts/data/11_acquire_card_ontology.py --source-archive /path/to/card-ontology.tar.bz2
-python scripts/data/12_prepare_card_context.py
-python scripts/data/13_prepare_residue_evidence.py
-python scripts/data/14_prepare_structural_descriptors.py
-python scripts/data/15_prepare_secondary_structure.py
-python scripts/data/16_prepare_processed_tables.py
-python scripts/data/17_define_modelling_tasks.py
-python scripts/data/18_define_evaluation_partitions.py
-python scripts/data/19_prepare_modelling_views.py
-python scripts/analysis/20_run_baseline_evaluation.py
-python scripts/analysis/21_calculate_baseline_uncertainty.py
-python scripts/analysis/22_analyze_homologue_baseline_transfer.py
-python scripts/analysis/23_evaluate_sequence_neighbourhood.py
-python scripts/analysis/24_prepare_sequence_plm_embeddings.py
-# GPU extraction is performed separately with --extract; see docs/execution.md.
-python scripts/analysis/25_evaluate_sequence_plm.py
-python scripts/analysis/26_compare_sequence_models.py
-python scripts/analysis/27_evaluate_experimental_structure.py
-python scripts/analysis/28_compare_structure_matched_models.py
-python scripts/analysis/29_analyze_biological_errors.py
-python scripts/analysis/30_prepare_residue_graphs.py
-python scripts/analysis/31_evaluate_residue_neighbourhood.py
-python scripts/analysis/32_evaluate_residue_graph_neural.py
-python scripts/analysis/33_evaluate_residue_geometry_neural.py
-python scripts/analysis/34_evaluate_sequence_residue_graph.py
-python scripts/analysis/35_analyze_sequence_structure_complementarity.py
-python scripts/analysis/36_analyze_biological_model_differences.py
-python scripts/analysis/37_analyze_training_seed_stability.py --postprocess-only --device cpu
-python scripts/analysis/38_analyze_sequence_model_sensitivity.py
-python scripts/analysis/39_evaluate_condition_transfer.py
-python scripts/analysis/40_evaluate_concentration_transfer.py
-python scripts/analysis/41_analyze_condition_concentration_biology.py
-python scripts/analysis/42_analyze_matched_homologue_models.py
-python scripts/analysis/43_evaluate_atomic_local_voxel.py --postprocess-only --device cpu
-python scripts/analysis/44_summarize_model_performance.py
-python scripts/figures/list_figure_sources.py
-```
+## Execution
 
-Acquisition commands that contact external services or import a separately downloaded archive should only be rerun when the corresponding source is intentionally being refreshed. Existing local raw sources are otherwise left unchanged.
+Use the Python environment specified by `requirements.txt`, `requirements-plm.txt`, `requirements-graph.txt`, and `requirements-dev.txt`, as applicable. See [docs/execution.md](docs/execution.md) for dependencies and execution requirements. In particular, GPU model training, sequence embedding extraction, external data acquisition, and structure preparation are not interchangeable with analyses of previously saved results.
 
 ### External secondary-structure dependency
 
 Secondary-structure regeneration requires a working `mkdssp` 4.x installation in addition to the Python dependencies. The study environment recorded `mkdssp` 4.6.1. The executable may be on `PATH`, at `~/.local/bin/mkdssp`, or provided with `python scripts/data/15_prepare_secondary_structure.py --mkdssp /absolute/path/to/mkdssp`. The libcifpp Chemical Component Dictionary used by `mkdssp` must also be available. Regeneration fails on an unsupported DSSP major version, missing output, unexpected residue counts, coordinate-identity mismatches, or `Unknown compound:` warnings.
 
-The current programs produce linked tables under:
 
-- `data/interim/sequence_mapping/`: assay, UniProt, PDB, and residue-number correspondence;
-- `data/interim/source_tables/`: workbook, worksheet, and column inventories;
-- `data/interim/mutation_measurements/`: long-form DMS, EC50, comparison, validation, and structure-mapping tables;
-- `data/interim/assay_definitions/`: assay metadata, condition summaries, grouping identifiers, and cross-protein comparison records;
-- `data/interim/protein_structures/`: experimental-chain selection, measured-position coverage, metal sites, ligand sites, and coordinate checks;
-- `data/interim/alphafold_acquisition/` and `alphafold_preparation/`: exact AlphaFold models, confidence, PAE, assay mapping, and PDB correspondence;
-- `data/interim/mcsa_acquisition/`, `mcsa_reference_sequences/`, and `mcsa_correspondence/`: selected M-CSA records and catalytic-residue correspondence;
-- `data/interim/card_acquisition/` and `card_context/`: selected CARD ontology context, drug-class mapping, and resistance-mechanism annotations;
-- `data/interim/residue_evidence/`: one selected-reference row per assay residue, the complete publication-reported NDM-1/VIM-2 aligned-position correspondence, and the separate Chen et al. (2024) reported WT-reversion comparison positions;
-- `data/interim/structural_descriptors/`: experimental-coordinate residue descriptors and pair geometry;
-- `data/interim/secondary_structure/`: retained DSSP assignments for selected experimental chains;
-- `data/processed/`: checked research tables plus declared observation-column roles for later modelling;
-- `data/interim/task_definitions/`: task scopes and evaluation rules;
-- `data/interim/evaluation_partitions/`: grouped evaluation assignments and partition audits;
-- `data/interim/modelling_views/`: modelling-view observation membership, input contracts, and matched modality-eligible populations;
-- `data/interim/baseline_evaluation/`: baseline predictions, grouped uncertainty, and matched homologue analyses;
-- `data/interim/sequence_neighbourhood_evaluation/`: mutation/condition and amino-acid-neighbourhood comparisons on the predefined core schemes;
-- `data/interim/sequence_plm_embeddings/`: ESMC mutation-site and wild-type residue embeddings constructed without mutation-effect outcomes, plus extraction records;
-- `data/interim/sequence_plm_evaluation/`: ESMC site-delta predictions, metrics, and model-selection records.
-- `data/interim/residue_graph_neural_evaluation/`: centre-residue and residue-graph neural predictions, repeated fits, metrics, and paired comparisons.
-- `data/interim/residue_geometry_neural_evaluation/`: residue-geometry neural predictions, repeated fits, metrics, and paired comparisons.
-- `data/interim/sequence_residue_graph_neural_evaluation/`: sequence-plus-residue-graph predictions, repeated fits, metrics, and paired comparisons.
-- `data/interim/sequence_structure_complementarity/`: validation-selected sequence/graph combinations, matched final comparisons, and prediction-complementarity diagnostics.
-- `data/interim/training_seed_stability/`: fixed-setting training-seed metrics and model-comparison stability records.
-- `data/interim/biological_model_difference_analysis/`: position-level structural associations, condition-stratified error differences, homologue-pair comparisons, and task concordance for the evaluated model families.
-- `data/interim/condition_transfer_evaluation/`: held-out-antibiotic and temperature-transfer predictions, source-only model-choice records, paired comparisons, and condition-shift summaries.
-- `data/interim/concentration_response_evaluation/`: held-out-concentration predictions, model-choice records, paired comparisons, and interpolation/extrapolation summaries.
-- `data/interim/condition_concentration_biological_analysis/`: condition and concentration transfer summaries at mutation and position levels.
-- `data/interim/matched_homologue_model_analysis/`: matched NDM-1/VIM-2 model predictions, grouped comparisons, background-difference associations, and position summaries.
-- `data/interim/atomic_local_voxel_evaluation/`: atom-level local-structure predictions, repeated fits, metrics, paired comparisons, and training records.
+The executable commands are located at:
+
+### Data acquisition and preparation
+
+```
+scripts/data/01_map_reference_sequences.py
+scripts/data/02_describe_source_tables.py
+scripts/data/03_extract_mutation_measurements.py
+scripts/data/04_define_assays_and_conditions.py
+scripts/data/05_prepare_protein_structures.py
+scripts/data/06_acquire_alphafold_models.py
+scripts/data/07_prepare_alphafold_models.py
+scripts/data/08_acquire_mcsa_annotations.py
+scripts/data/09_acquire_mcsa_reference_sequences.py
+scripts/data/10_prepare_mcsa_correspondence.py
+scripts/data/11_acquire_card_ontology.py
+scripts/data/12_prepare_card_context.py
+scripts/data/13_prepare_residue_evidence.py
+scripts/data/14_prepare_structural_descriptors.py
+scripts/data/15_prepare_secondary_structure.py
+scripts/data/16_prepare_processed_tables.py
+scripts/data/17_define_modelling_tasks.py
+scripts/data/18_define_evaluation_partitions.py
+scripts/data/19_prepare_modelling_views.py
+```
+
+### Analyses and numerical checks
+
+```
+scripts/analysis/20_run_baseline_evaluation.py
+scripts/analysis/21_calculate_baseline_uncertainty.py
+scripts/analysis/22_analyze_homologue_baseline_transfer.py
+scripts/analysis/23_evaluate_sequence_neighbourhood.py
+scripts/analysis/24_prepare_sequence_plm_embeddings.py
+scripts/analysis/25_evaluate_sequence_plm.py
+scripts/analysis/26_compare_sequence_models.py
+scripts/analysis/27_evaluate_experimental_structure.py
+scripts/analysis/28_compare_structure_matched_models.py
+scripts/analysis/29_analyze_biological_errors.py
+scripts/analysis/30_prepare_residue_graphs.py
+scripts/analysis/31_evaluate_residue_neighbourhood.py
+scripts/analysis/32_evaluate_residue_graph_neural.py
+scripts/analysis/33_evaluate_residue_geometry_neural.py
+scripts/analysis/34_evaluate_sequence_residue_graph.py
+scripts/analysis/35_analyze_sequence_structure_complementarity.py
+scripts/analysis/36_analyze_biological_model_differences.py
+scripts/analysis/37_analyze_training_seed_stability.py
+scripts/analysis/38_analyze_sequence_model_sensitivity.py
+scripts/analysis/39_evaluate_condition_transfer.py
+scripts/analysis/40_evaluate_concentration_transfer.py
+scripts/analysis/41_analyze_condition_concentration_biology.py
+scripts/analysis/42_analyze_matched_homologue_models.py
+scripts/analysis/43_evaluate_atomic_local_voxel.py
+scripts/analysis/44_summarize_model_performance.py
+scripts/analysis/45_analyze_homologue_prediction_diagnostics.py
+scripts/analysis/46_check_research_file_hashes.py
+scripts/analysis/47_audit_source_selection_records.py
+scripts/analysis/48_evaluate_position_withheld_homologue_baselines.py
+scripts/analysis/49_verify_source_fitting_boundaries.py
+scripts/analysis/50_verify_source_ridge_selection.py
+scripts/analysis/51_validate_mutation_effect_results.py
+scripts/analysis/52_compare_source_fitting_populations.py
+scripts/analysis/53_check_structural_associations.py
+scripts/analysis/54_evaluate_source_position_withheld_esmc.py
+scripts/analysis/55_summarize_source_position_predictions.py
+```
+
+
+These are command locations, not a command to execute every analysis consecutively. Individual commands have different data, device, and resource requirements. For example, sequence embeddings and neural-model outputs should not be regenerated when analysing saved results. The script-specific documentation and available command-line options determine how each command should be run.
 
 ## Scientific conventions
 
@@ -117,9 +115,20 @@ The current programs produce linked tables under:
 - Evaluation-partition preparation assigns residue-position or mutation groups according to the scientific claim. Group assignment does not use mutation-effect scores and keeps held-out labels unavailable during model selection.
 - Modelling-view preparation fixes modelling input roles and exact scheme membership before feature generation. Biological reference fields reserved for later validation do not become default predictors, and modality comparisons use matched eligible rows.
 
-See `docs/` for assay definitions, residue numbering, experimental-structure selection, evaluation design, sequence-model analyses, repository layout, and execution details.
 
-## Quality checks
+## Figure generation
+
+Figures 2–6 have source programs in `scripts/figures/`. Supplementary Figure S12 is generated by `scripts/figures/generate_source_position_prediction_figure.py` using the saved ROC AUC table in its directory and the 10,000-resample position-bootstrap comparison table in `data/interim/source_position_prediction_tables/`. Figure 1 is assembled separately from scientific components. The saved numerical inputs should be checked before replacing a published figure PDF.
+
+## Research data and external references
+
+Experimental mutation measurements were obtained from the studies by Chen and colleagues (2020, 2022 and 2024), and structural and annotation records were obtained from their cited databases. The original source data and downloaded reference files are retained separately from author-generated tables, figures and predictions. Third-party data are not automatically covered by the repository's software licence. Refer to [RIGHTS.md](RIGHTS.md), [data/README.md](data/README.md), and the original publications for the applicable terms.
+
+The scientific outputs include numerical comparison tables in `data/interim/` and the generated figures in `figures/`. Files containing original experimental measurements or predictions copied directly from source assays require independent redistribution review.
+
+## Verification
+
+Run from the repository root with the project environment active:
 
 ```bash
 ruff check .
@@ -127,3 +136,9 @@ ruff format --check .
 python -m compileall -q src scripts tests
 pytest -ra
 ```
+
+For detailed task definitions, structure selection, source-only fitting restrictions, and evaluation results, see [docs/](docs/).
+
+## Citation and licence
+
+See [CITATION.cff](CITATION.cff) for software citation information, [LICENSE](LICENSE) for the code licence, and [RIGHTS.md](RIGHTS.md) for authorship and third-party material restrictions.

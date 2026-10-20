@@ -1,4 +1,4 @@
-"""Plot source-position-withheld ESM-C comparisons from saved numerical tables."""
+# Plot source-position-withheld ESM-C comparisons from saved numerical tables.
 
 from pathlib import Path
 
@@ -7,8 +7,12 @@ import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
 
-ROOT = Path(__file__).resolve().parents[3]
-INPUT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
+INPUT = ROOT / "figures/supplementary/source_position_predictions"
+GROUPS_INPUT = ROOT / (
+    "data/interim/source_position_prediction_tables/"
+    "target_score_stratified_comparisons.csv"
+)
 OUTPUT = ROOT / "figures/supplementary/S12_source_position_predictions.pdf"
 
 MODELS = (
@@ -39,7 +43,7 @@ def _one_row(table: pd.DataFrame, condition: pd.Series) -> pd.Series:
 def main() -> None:
     plt.switch_backend("Agg")
     auc = pd.read_csv(INPUT / "minimum_score_roc_auc.csv")
-    groups = pd.read_csv(INPUT / "target_score_stratified_comparisons.csv")
+    groups = pd.read_csv(GROUPS_INPUT)
     plt.rcParams.update(
         {
             "font.family": "DejaVu Sans",
